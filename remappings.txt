@@ -3,3 +3,4 @@ forge-std/=lib/forge-std/src/
 @openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts
 @resource-stable-credit/=lib/resource-stable-credit/src
+@resource-risk-management/=src
