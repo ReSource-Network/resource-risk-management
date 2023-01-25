@@ -48,11 +48,11 @@ contract RiskManager is OwnableUpgradeable, IRiskManager {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    // TODO: add update function to check RiskOracle's predicted network default rate and update baseFee
+    // TODO: add "syncRisk" function to check RiskOracle's predicted network default rate and update baseFee
 
-    function setBaseFeeRate(address network, uint256 _baseFeeRate) external onlyOwner {
-        baseFeeRate[network] = _baseFeeRate;
-    }
+    // function setBaseFeeRate(address network, uint256 _baseFeeRate) external onlyOwner {
+    //     baseFeeRate[network] = _baseFeeRate;
+    // }
 
     /// @dev Replaces reservePool
     function setReservePool(address newReservePool) external onlyOwner {
