@@ -113,7 +113,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         }
     }
 
-    function setTargetRTD(address network, uint256 _targetRTD) external onlyRiskManager {
+    function setTargetRTD(address network, uint256 _targetRTD) external override onlyRiskManager {
         require(_targetRTD <= MAX_PPM, "ReservePool: RTD must be less than 100%");
         // realocate oporateorPool if any to reserve if targetRTD is increased
         if (_targetRTD > targetRTD[network] && operatorPool[network] > 0) {
@@ -161,10 +161,10 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /* ========== MODIFIERS ========== */
 
     modifier onlyOperator(address network) {
-        // require(
-        //     IStableCredit(network).access().isOperator(msg.sender) || msg.sender == owner(),
-        //     "ReservePool: Caller is not operator"
-        // );
+        require(
+            IStableCredit(network).access().isOperator(msg.sender) || msg.sender == owner(),
+            "ReservePool: Caller is not operator"
+        );
         _;
     }
 

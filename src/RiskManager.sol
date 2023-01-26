@@ -18,7 +18,7 @@ contract RiskManager is OwnableUpgradeable, IRiskManager {
 
     /* ========== STATE VARIABLES ========== */
 
-    IReservePool public _reservePool;
+    IReservePool public reservePool;
 
     mapping(address => uint256) public baseFeeRate;
 
@@ -28,39 +28,45 @@ contract RiskManager is OwnableUpgradeable, IRiskManager {
         __Ownable_init();
     }
 
-    /* ========== VIEWS ========== */
-
-    function reservePool() external view override returns (address) {
-        return address(_reservePool);
-    }
-
     /* ========== PUBLIC FUNCTIONS ========== */
 
     function depositFees(address network, uint256 amount) external override {
         IStableCredit(network).referenceToken().safeTransferFrom(msg.sender, address(this), amount);
-        _reservePool.depositFees(network, amount);
+        IStableCredit(network).referenceToken().approve(address(reservePool), amount);
+        reservePool.depositFees(network, amount);
     }
 
     function depositPayment(address network, uint256 amount) external override {
         IStableCredit(network).referenceToken().safeTransferFrom(msg.sender, address(this), amount);
-        _reservePool.depositPayment(network, amount);
+        IStableCredit(network).referenceToken().approve(address(reservePool), amount);
+        reservePool.depositPayment(network, amount);
+    }
+
+    function syncRisk(address network) external {
+        // TODO:
+        // retrieve RiskOracle's current predicted network default rate
+        // translate predicted default rate to newTargetRTD and newBaseFeeRate
+        // reservePool.setTargetRTD(network, newTargetRTD)
+        // baseFeeRate[network] = newBaseFeeRate
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    // TODO: add "syncRisk" function to check RiskOracle's predicted network default rate and update baseFee
-
-    // function setBaseFeeRate(address network, uint256 _baseFeeRate) external onlyOwner {
-    //     baseFeeRate[network] = _baseFeeRate;
-    // }
-
     /// @dev Replaces reservePool
     function setReservePool(address newReservePool) external onlyOwner {
-        _reservePool = IReservePool(newReservePool);
+        reservePool = IReservePool(newReservePool);
     }
 
     function reimburseMember(address network, address member, uint256 amount) external override {
         require(msg.sender == network, "RiskManager: only network can reimburse member");
-        _reservePool.reimburseMember(network, member, amount);
+        reservePool.reimburseMember(network, member, amount);
+    }
+
+    function setBaseFeeRate(address network, uint256 _baseFeeRate) external onlyOwner {
+        baseFeeRate[network] = _baseFeeRate;
+    }
+
+    function setTargetRTD(address network, uint256 _targetRTD) external onlyOwner {
+        reservePool.setTargetRTD(network, _targetRTD);
     }
 }

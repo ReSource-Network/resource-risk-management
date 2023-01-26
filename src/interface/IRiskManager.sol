@@ -8,7 +8,5 @@ interface IRiskManager {
 
     function depositFees(address network, uint256 amount) external;
 
-    function reservePool() external view returns (address);
-
     function baseFeeRate(address network) external view returns (uint256);
 }

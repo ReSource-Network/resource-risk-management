@@ -7,4 +7,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 /// @author ReSource
 /// @notice
 
-contract RiskOracle is OwnableUpgradeable {}
+contract RiskOracle is OwnableUpgradeable {
+    function initialize() external virtual initializer {
+        __Ownable_init();
+    }
+}
