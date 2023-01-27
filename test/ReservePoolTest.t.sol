@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "./ReSourceRiskManagerTest.t.sol";
+import "./ReSourceRiskManagementTest.t.sol";
 
-contract ReservePoolTest is ReSourceRiskManagerTest {
+contract ReservePoolTest is ReSourceRiskManagementTest {
     address alice;
     address bob;
 

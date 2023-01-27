@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "./ReSourceRiskManagerTest.t.sol";
+import "./ReSourceRiskManagementTest.t.sol";
 
 contract RiskManagerTest is ReSourceRiskManagerTest {
     address alice;
@@ -41,6 +41,6 @@ contract RiskManagerTest is ReSourceRiskManagerTest {
         vm.stopPrank();
     }
 
-    // syncRisk uses predicted default rate updates baseFeeRate and targetRTD
-    // TODO:
+    // TODO: testSyncRisk function
+    //      uses predicted default rate provided by RiskOracle to update baseFeeRate and targetRTD
 }

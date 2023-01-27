@@ -79,7 +79,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     function withdrawOperator(address network, uint256 amount)
         public
         nonReentrant
-        onlyOperator(network)
+        onlyOperator(msg.sender)
     {
         require(amount > 0, "ReservePool: Cannot withdraw 0");
         require(amount <= operatorPool[network], "ReservePool: Insufficient operator pool");
