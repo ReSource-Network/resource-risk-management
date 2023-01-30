@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "./ReSourceRiskManagementTest.t.sol";
 
-contract RiskManagerTest is ReSourceRiskManagerTest {
+contract RiskManagerTest is ReSourceRiskManagementTest {
     address alice;
     address bob;
 
