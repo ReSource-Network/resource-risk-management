@@ -7,7 +7,6 @@ import "../src/RiskManager.sol";
 import "../src/ReservePool.sol";
 import "../src/RiskOracle.sol";
 import "./MockERC20.sol";
-import "./MockCreditIssuer.sol";
 import "@resource-stable-credit/StableCredit.sol";
 import "@resource-stable-credit/AccessManager.sol";
 
@@ -49,9 +48,6 @@ contract ReSourceRiskManagementTest is Test {
         stableCredit.__StableCredit_init(
             address(referenceToken), address(accessManager), "mock", "MOCK"
         );
-        // deploy credit issuer
-        creditIssuer = new MockCreditIssuer();
-        creditIssuer.initialize();
         // initialize contract variables
         // stableCredit.set
         accessManager.grantOperator(address(stableCredit));
