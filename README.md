@@ -1,39 +1,53 @@
-# <h1 align="center"> Forge Template </h1>
+```
+   _____       _____
+  |  __ \     / ____|
+  | |__) |___| (___   ___  _   _ _ __ ___ ___
+  |  _  // _ \\___ \ / _ \| | | | '__/ __/ _ \
+  | | \ \  __/____) | (_) | |_| | | | (_|  __/
+  |_|  \_\___|_____/ \___/ \__,_|_|  \___\___|
+```
 
-**Template repository for getting started quickly with Foundry projects**
+# ⚠️ ReSource Risk Management
 
-![Github Actions](https://github.com/foundry-rs/forge-template/workflows/CI/badge.svg)
+The following decentralized infrustrucutre is responsible for providing **ReSource Stable Credit** networks with the means to analyze, predict, and mitigate credit risk within a mutual credit context.
 
-## Getting Started
+To accomplish this, this protocol interfaces with the **ReSource Stable Credit** protocol and **Masa Finance** protocol.
 
-Click "Use this template" on [GitHub](https://github.com/foundry-rs/forge-template) to create a new repository with this repo as the initial state.
+📕 For more information on ReSource and Stable Credits go to https://www.resource.finance/
 
-Or, if your repo already exists, run:
-```sh
-forge init
+## Protocol Overview
+
+---
+
+The following diagram depicts how **Stable Credit Networks** interact with the **ReSource Risk Managment** protocol to stabalize their credit currencies.  
+![alt text](./protocol_diagram.png)
+
+---
+
+## Contracts:
+
+- **`RiskManager.sol`**: Responsible for referencing risk analysis provided by the `RiskOracle` contract to update network risk variables (ex. BaseFee, target RTD).
+- **`ReservePool.sol`**: Responsible for storing and transfering network reference tokens.
+- **`RiskOracle.sol`**: Responsible for exposing .
+- **`CreditIssuer.sol`**: Responsible for underwriting network participants to issue credit terms (note: base implementation intended to be extended)
+
+# 🏄‍♂️ Quick Start
+
+This project uses [Foundry](https://github.com/foundry-rs/foundry) as the development framework.
+####Dependencies
+
+```bash
+forge install
+```
+
+####Compilation
+
+```bash
 forge build
+```
+
+####Testing
+
+```bash
 forge test
 ```
-
-## Writing your first test
-
-All you need is to `import forge-std/Test.sol` and then inherit it from your test contract. Forge-std's Test contract comes with a pre-instatiated [cheatcodes environment](https://book.getfoundry.sh/cheatcodes/), the `vm`. It also has support for [ds-test](https://book.getfoundry.sh/reference/ds-test.html)-style logs and assertions. Finally, it supports Hardhat's [console.log](https://github.com/brockelmore/forge-std/blob/master/src/console.sol). The logging functionalities require `-vvvv`.
-
-```solidity
-pragma solidity 0.8.10;
-
-import "forge-std/Test.sol";
-
-contract ContractTest is Test {
-    function testExample() public {
-        vm.roll(100);
-        console.log(1);
-        emit log("hi");
-        assertTrue(true);
-    }
-}
-```
-
-## Development
-
-This project uses [Foundry](https://getfoundry.sh). See the [book](https://book.getfoundry.sh/getting-started/installation.html) for instructions on how to install and use Foundry.

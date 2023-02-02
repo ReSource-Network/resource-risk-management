@@ -21,7 +21,6 @@ contract ReSourceRiskManagementTest is Test {
     // stable credit network contracts
     StableCredit public stableCredit;
     AccessManager public accessManager;
-    MockCreditIssuer public creditIssuer;
 
     function setUpRiskManagement() public {
         deployer = address(1);
