@@ -9,3 +9,7 @@
 	path = lib/openzeppelin-contracts-upgradeable
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
 	branch = v4.8.1
+[submodule "lib/stable-credit"]
+	path = lib/stable-credit
+	url = https://github.com/ReSource-Network/stable-credit
+	branch = forge
