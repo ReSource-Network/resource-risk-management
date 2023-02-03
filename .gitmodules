@@ -9,6 +9,3 @@
 	path = lib/openzeppelin-contracts-upgradeable
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
 	branch = v4.8.1
-[submodule "lib/resource-stable-credit"]
-	path = lib/resource-stable-credit
-	url = https://github.com/ReSource-Network/resource-stable-credit
