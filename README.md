@@ -20,7 +20,7 @@ To accomplish this, this protocol interfaces with the **ReSource Stable Credit**
 ---
 
 The following diagram depicts how **Stable Credit Networks** interact with the **ReSource Risk Managment** protocol to stabalize their credit currencies.  
-![alt text](./protocol_diagram.png)
+![alt text](./diagram.png)
 
 ---
 
@@ -50,4 +50,10 @@ forge build
 
 ```bash
 forge test
+```
+
+####Deploy
+
+```bash
+TODO
 ```

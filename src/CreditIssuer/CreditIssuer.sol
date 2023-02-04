@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "../interface/IStableCredit.sol";
-import "../interface/IMutualCredit.sol";
-import "../interface/ICreditIssuer.sol";
+import "@resource-stable-credit/interface/IStableCredit.sol";
+import "@resource-stable-credit/interface/IMutualCredit.sol";
 
 /// @title CreditIssuer
 /// @author ReSource
@@ -30,27 +29,19 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    /// @notice Defaults expired credit lines.
-    /// @dev publically exposed for state synchronization. Returns true if line is valid.
-    function validateCreditLine(address network, address member) public virtual returns (bool) {
-        require(
-            IMutualCredit(network).creditLimitOf(member) > 0,
-            "StableCredit: member does not have a credit line"
-        );
-        if (!inActivePeriod(network, member)) {
-            expireCreditLine(network, member);
-            return false;
-        }
-        return true;
-    }
+    function validateTransaction(address network, address from, address to, uint256 amount)
+        public
+        virtual
+        returns (bool)
+    {}
 
     /* ========== VIEWS ========== */
 
-    function inActivePeriod(address network, address member) public view returns (bool) {
-        return creditPeriods[network][member].issueTimestamp == 0
-            ? false
-            : block.timestamp < creditPeriods[network][member].expirationTimestamp;
+    function periodExpired(address network, address member) public view returns (bool) {
+        return block.timestamp >= creditPeriods[network][member].expirationTimestamp;
     }
+
+    function inGoodStanding(address network, address member) public view virtual returns (bool) {}
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
@@ -58,14 +49,9 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
     function underwriteMember(address network, address member) public virtual {
         require(
             creditPeriods[network][member].issueTimestamp == 0,
-            "RiskManager: member already in active credit period"
+            "RiskManager: member already has active credit period"
         );
-        // calculate expirationTimestamp (ex. uint256 expirationTimestamp = block.timestamp + 90 days;)
-        // calculate creditLimit (ex. uint256 creditLimit = 1000;)
-        // calcualte member feeRate (ex. uint256 feeRate = 100000; // 10%)
-        // initialize credit period (ex. initializeCreditPeriod(network, member, expirationTimestamp);)
-        // set member fee rate (ex. IStableCredit(network).feeManager().setMemberFeeRate(member, _feeRate);)
-        // create credit line (ex. IStableCredit(network).createCreditLine(member, creditLimit, 0);)
+        // << insert custom underwriting logic here >>
     }
 
     /* ========== PRIVATE FUNCTIONS ========== */
@@ -87,7 +73,6 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
         if (creditBalance > 0) {
             IStableCredit(network).writeOffCreditLine(member);
             emit CreditLineDefaulted(network, member);
-            return;
         }
         emit CreditPeriodExpired(network, member);
     }

@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface ICreditIssuer {
-    function validateCreditLine(address network, address member) external returns (bool);
+    function validateTransaction(address network, address _from, address _to, uint256 amount)
+        external
+        returns (bool);
 
     event CreditLineDefaulted(address network, address member);
 
