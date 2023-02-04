@@ -11,7 +11,7 @@ import "./MockERC20.sol";
 import "@resource-stable-credit/StableCredit.sol";
 import "@resource-stable-credit/AccessManager.sol";
 
-contract ReSourceRiskManagementTest is Test {
+contract ReSourceTest is Test {
     address deployer;
 
     // risk management contracts
@@ -24,11 +24,11 @@ contract ReSourceRiskManagementTest is Test {
     StableCredit public stableCredit;
     AccessManager public accessManager;
 
-    function setUpRiskManagement() public {
+    function setUpReSourceTest() public {
         deployer = address(1);
         vm.startPrank(deployer);
 
-        // deploy riskManager, reservePool, riskOracle, and stableCredit
+        // deploy riskManager, reservePool, riskOracle, creditIssuer and stableCredit
         riskManager = new RiskManager();
         riskManager.initialize();
         reservePool = new ReservePool();
@@ -47,11 +47,10 @@ contract ReSourceRiskManagementTest is Test {
         // deploy stable credit network
         stableCredit = new StableCredit();
         stableCredit.__StableCredit_init(
-            address(referenceToken), address(accessManager), "mock", "MOCK"
+            address(referenceToken), address(accessManager), address(creditIssuer), "mock", "MOCK"
         );
 
         // initialize contract variables
-        stableCredit.setCreditIssuer(address(creditIssuer));
         accessManager.grantOperator(address(stableCredit));
         reservePool.setTargetRTD(address(stableCredit), 200000); // set targetRTD to 20%
         vm.stopPrank();
