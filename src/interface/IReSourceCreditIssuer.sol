@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 interface IReSourceCreditIssuer {
     struct CreditTerm {
+        bool paused;
+        bool reUnderwrite;
         bool rebalanced;
-        bool wasPastDue;
         uint256 periodIncome;
         uint256 feeRate;
     }

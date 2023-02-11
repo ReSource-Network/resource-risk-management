@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.0;
 
 import "./ReSourceTest.t.sol";
 
@@ -38,6 +38,14 @@ contract RiskManagerTest is ReSourceTest {
         riskManager.depositPayment(address(stableCredit), amount);
         assertEq(reservePool.reserveOf(address(stableCredit)), amount);
         assertEq(reservePool.paymentReserve(address(stableCredit)), amount);
+        vm.stopPrank();
+    }
+
+    function testUpdateBaseFeeRate() public {
+        // update base fee rate
+        vm.startPrank(deployer);
+        riskManager.setBaseFeeRate(address(stableCredit), 10000);
+        assertEq(riskManager.baseFeeRate(address(stableCredit)), 10000);
         vm.stopPrank();
     }
 

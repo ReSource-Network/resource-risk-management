@@ -19,6 +19,10 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
 
     // network => member => period
     mapping(address => mapping(address => CreditPeriod)) public creditPeriods;
+    // network => period length in seconds
+    mapping(address => uint256) periodLength;
+    // network => grace period length in seconds
+    mapping(address => uint256) gracePeriodLength;
 
     /* ========== INITIALIZER ========== */
 
@@ -35,13 +39,25 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
         returns (bool)
     {}
 
+    function syncCreditLine(address network, address member) public {
+        validateTransaction(network, member, address(0), 0);
+    }
+
     /* ========== VIEWS ========== */
 
     function periodExpired(address network, address member) public view returns (bool) {
         return block.timestamp >= creditPeriods[network][member].expirationTimestamp;
     }
 
-    function inGoodStanding(address network, address member) public view virtual returns (bool) {}
+    function inGracePeriod(address network, address member) public view returns (bool) {
+        return periodExpired(network, member)
+            && block.timestamp
+                < creditPeriods[network][member].expirationTimestamp + gracePeriodLength[network];
+    }
+
+    function periodExpirationOf(address network, address member) public view returns (uint256) {
+        return creditPeriods[network][member].expirationTimestamp;
+    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
@@ -54,16 +70,28 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
         // << insert custom underwriting logic here >>
     }
 
+    function setPeriodLength(address network, uint256 _periodLength)
+        public
+        onlyAuthorized(network)
+    {
+        periodLength[network] = _periodLength;
+    }
+
+    function setGracePeriodLength(address network, uint256 _gracePeriodLength)
+        public
+        onlyAuthorized(network)
+    {
+        gracePeriodLength[network] = _gracePeriodLength;
+    }
+
     /* ========== PRIVATE FUNCTIONS ========== */
 
-    function initializeCreditPeriod(address network, address member, uint256 _expirationTimestamp)
-        internal
-    {
+    function initializeCreditPeriod(address network, address member) internal virtual {
         creditPeriods[network][member] = CreditPeriod({
             issueTimestamp: block.timestamp,
-            expirationTimestamp: _expirationTimestamp
+            expirationTimestamp: block.timestamp + periodLength[network]
         });
-        emit CreditPeriodCreated(network, member, _expirationTimestamp);
+        emit CreditPeriodCreated(network, member, block.timestamp + periodLength[network]);
     }
 
     /// @dev deletes credit terms and emits a default event if caller has outstanding debt.
@@ -72,8 +100,19 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
         delete creditPeriods[network][member];
         if (creditBalance > 0) {
             IStableCredit(network).writeOffCreditLine(member);
+            IStableCredit(network).updateCreditLimit(member, 0);
             emit CreditLineDefaulted(network, member);
         }
         emit CreditPeriodExpired(network, member);
+    }
+
+    /* ========== MODIFIERS ========== */
+
+    modifier onlyAuthorized(address network) {
+        require(
+            IStableCredit(network).access().isOperator(msg.sender) || owner() == msg.sender,
+            "FeeManager: Unauthorized caller"
+        );
+        _;
     }
 }
