@@ -5,15 +5,8 @@ import "./ReSourceTest.t.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract ReSourceCreditIssuerTest is ReSourceTest {
-    address alice;
-    address bob;
-
     function setUp() public {
         setUpReSourceTest();
-        alice = address(2);
-        bob = address(3);
-        vm.deal(alice, 100 ether);
-        vm.deal(bob, 100 ether);
         vm.startPrank(deployer);
         creditIssuer.initializeCreditLine(
             address(stableCredit),

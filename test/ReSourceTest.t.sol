@@ -13,6 +13,8 @@ import "@resource-stable-credit/AccessManager.sol";
 import "@resource-stable-credit/FeeManager/FeeManager.sol";
 
 contract ReSourceTest is Test {
+    address alice;
+    address bob;
     address deployer;
 
     // risk management contracts
@@ -27,6 +29,10 @@ contract ReSourceTest is Test {
     FeeManager public feeManager;
 
     function setUpReSourceTest() public {
+        alice = address(2);
+        bob = address(3);
+        vm.deal(alice, 100 ether);
+        vm.deal(bob, 100 ether);
         deployer = address(1);
         vm.startPrank(deployer);
 
