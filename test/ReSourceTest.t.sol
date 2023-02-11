@@ -23,7 +23,6 @@ contract ReSourceTest is Test {
 
     // stable credit network contracts
     StableCredit public stableCredit;
-    MockERC20 referenceToken;
     AccessManager public accessManager;
     FeeManager public feeManager;
 
@@ -49,7 +48,7 @@ contract ReSourceTest is Test {
         // deploy mock stable access manager and credit network
         accessManager = new AccessManager();
         accessManager.initialize(new address[](0));
-        referenceToken = new MockERC20(1000000 * (10e18), "Reference Token", "REF");
+        MockERC20 referenceToken = new MockERC20(1000000 * (10e18), "Reference Token", "REF");
         // deploy stable credit network
         stableCredit = new StableCredit();
         stableCredit.__StableCredit_init(
@@ -64,6 +63,9 @@ contract ReSourceTest is Test {
         creditIssuer.setPeriodLength(address(stableCredit), 90 days); // set defaultCutoff to 90 days
         creditIssuer.setGracePeriodLength(address(stableCredit), 30 days); // set gracePeriod to 30 days
         creditIssuer.setMinITD(address(stableCredit), 100000); // set max income to debt ratio to 10%
+        riskManager.setBaseFeeRate(address(stableCredit), 50000); // set base fee rate to 5%
+        stableCredit.setFeeManager(address(feeManager));
+        stableCredit.setRiskManager(address(riskManager));
         vm.stopPrank();
     }
 }

@@ -25,7 +25,7 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
         accessManager.grantMember(bob);
         vm.stopPrank();
         vm.startPrank(deployer);
-        referenceToken.transfer(alice, 1000 * (10e18));
+        stableCredit.referenceToken().transfer(alice, 1000 * (10e18));
         vm.stopPrank();
     }
 
@@ -250,7 +250,7 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
         // check that alice has no income
         assertEq(creditIssuer.creditTermsOf(address(stableCredit), alice).periodIncome, 0);
         // approve
-        referenceToken.approve(address(stableCredit), type(uint256).max);
+        stableCredit.referenceToken().approve(address(stableCredit), type(uint256).max);
         // alice make payment on credit balance
         stableCredit.repayCreditBalance(
             alice, uint128(10 * (10 ** IERC20Metadata(address(stableCredit)).decimals()))
@@ -269,7 +269,7 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
         vm.warp(block.timestamp + 90 days + 1);
         assertTrue(creditIssuer.isFrozen(address(stableCredit), alice));
         // approve reference token
-        referenceToken.approve(address(stableCredit), type(uint256).max);
+        stableCredit.referenceToken().approve(address(stableCredit), type(uint256).max);
         // alice make payment on credit balance
         stableCredit.repayCreditBalance(
             alice, uint128(10 * (10 ** IERC20Metadata(address(stableCredit)).decimals()))
