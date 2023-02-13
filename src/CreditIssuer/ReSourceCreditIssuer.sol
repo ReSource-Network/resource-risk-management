@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "./CreditIssuer.sol";
 import "../interface/IReSourceCreditIssuer.sol";
 
-import "forge-std/Test.sol";
-
 /// @title ReSourceCreditIssuer
 /// @author ReSource
 /// @notice Issue Credit to network members and manage credit terms
@@ -25,31 +23,6 @@ contract ReSourceCreditIssuer is CreditIssuer, IReSourceCreditIssuer {
 
     function initialize() public virtual initializer {
         __CreditIssuer_init();
-    }
-
-    /* ========== MUTATIVE FUNCTIONS ========== */
-
-    function validateTransaction(address network, address from, address to, uint256 amount)
-        public
-        override
-        returns (bool)
-    {
-        if (amount > 0 || to != address(0)) {
-            require(msg.sender == network, "ReSourceCreditIssuer: invalid tx data");
-        }
-        // update recipients terms.
-        if (!periodExpired(network, to) || inGracePeriod(network, to)) {
-            updateMemberTerms(network, to, amount);
-        }
-        // valid if sender does not have terms.
-        if (creditPeriods[network][from].issueTimestamp == 0) return true;
-        // valid if sender is not using credit.
-        if (amount > 0 && amount <= IERC20Upgradeable(network).balanceOf(from)) return true;
-        // if end of active credit period, handle expiration
-        if (periodExpired(network, from)) {
-            return handleExpired(network, from);
-        }
-        return true;
     }
 
     /* ========== VIEWS ========== */
@@ -147,6 +120,26 @@ contract ReSourceCreditIssuer is CreditIssuer, IReSourceCreditIssuer {
     }
 
     /* ========== PRIVATE FUNCTIONS ========== */
+
+    function _validateTransaction(address network, address from, address to, uint256 amount)
+        internal
+        override
+        returns (bool)
+    {
+        // update recipients terms.
+        if (inActivePeriod(network, to)) {
+            updateMemberTerms(network, to, amount);
+        }
+        // valid if sender does not have terms.
+        if (creditPeriods[network][from].issueTimestamp == 0) return true;
+        // valid if sender is not using credit.
+        if (amount > 0 && amount <= IERC20Upgradeable(network).balanceOf(from)) return true;
+        // if end of active credit period, handle expiration
+        if (periodExpired(network, from)) {
+            return handleExpired(network, from);
+        }
+        return true;
+    }
 
     function initializeCreditPeriod(address network, address member) internal override {
         super.initializeCreditPeriod(network, member);

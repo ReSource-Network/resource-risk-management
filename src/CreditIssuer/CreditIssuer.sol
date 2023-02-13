@@ -34,25 +34,33 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function validateTransaction(address network, address from, address to, uint256 amount)
-        public
-        virtual
+        external
+        onlyNetwork(network)
         returns (bool)
-    {}
+    {
+        return _validateTransaction(network, from, to, amount);
+    }
 
-    function syncCreditLine(address network, address member) public {
-        validateTransaction(network, member, address(0), 0);
+    function syncCreditLine(address network, address member) external returns (bool) {
+        return _validateTransaction(network, member, address(0), 0);
     }
 
     /* ========== VIEWS ========== */
 
-    function periodExpired(address network, address member) public view returns (bool) {
-        return block.timestamp >= creditPeriods[network][member].expirationTimestamp;
+    function inActivePeriod(address network, address member) public view returns (bool) {
+        return creditPeriods[network][member].expirationTimestamp > 0
+            && block.timestamp
+                < creditPeriods[network][member].expirationTimestamp + gracePeriodLength[network];
     }
 
     function inGracePeriod(address network, address member) public view returns (bool) {
         return periodExpired(network, member)
             && block.timestamp
                 < creditPeriods[network][member].expirationTimestamp + gracePeriodLength[network];
+    }
+
+    function periodExpired(address network, address member) public view returns (bool) {
+        return block.timestamp >= creditPeriods[network][member].expirationTimestamp;
     }
 
     function periodExpirationOf(address network, address member) public view returns (uint256) {
@@ -64,10 +72,9 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
     // intended to be overwritten in parent implementation
     function underwriteMember(address network, address member) public virtual {
         require(
-            creditPeriods[network][member].issueTimestamp == 0,
-            "RiskManager: member already has active credit period"
+            !inActivePeriod(network, member), "RiskManager: member already in active credit period"
         );
-        // << insert custom underwriting logic here >>
+        // << insert underwriting logic >>
     }
 
     function setPeriodLength(address network, uint256 _periodLength)
@@ -106,6 +113,17 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
         emit CreditPeriodExpired(network, member);
     }
 
+    /**
+     * @dev Hook that is called before any transfer of credits
+     */
+    function _validateTransaction(address network, address from, address to, uint256 amount)
+        internal
+        virtual
+        returns (bool)
+    {
+        // << Insert tx validation logic >>
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier onlyAuthorized(address network) {
@@ -113,6 +131,11 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
             IStableCredit(network).access().isOperator(msg.sender) || owner() == msg.sender,
             "FeeManager: Unauthorized caller"
         );
+        _;
+    }
+
+    modifier onlyNetwork(address network) {
+        require(msg.sender == network, "ReSourceCreditIssuer: can only be called by network");
         _;
     }
 }
