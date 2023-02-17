@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./IReservePool.sol";
+
 interface IRiskManager {
-    function reimburseMember(address network, address member, uint256 amount) external;
-
-    function depositPayment(address network, uint256 amount) external;
-
-    function depositFees(address network, uint256 amount) external;
-
-    function baseFeeRate(address network) external view returns (uint256);
+    function reservePool() external view returns (IReservePool);
 }

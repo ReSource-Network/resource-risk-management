@@ -12,38 +12,77 @@ contract ReservePoolTest is ReSourceTest {
         vm.stopPrank();
     }
 
-    // deposit reserve updates reserve in reserve pool
-    function testDepositReserve() public {
+    // deposit into primary reserve updates total reserve and primary reserve
+    function testDepositIntoPrimaryReserve() public {
         // deposit reserve updates reserve in reserve pool
         vm.startPrank(deployer);
         uint256 amount = 100;
+        // approve reference token
         stableCredit.referenceToken().approve(address(riskManager), amount);
-        reservePool.depositReserve(address(stableCredit), amount);
-        assertEq(reservePool.reserveOf(address(stableCredit)), amount);
-        assertEq(reservePool.reserve(address(stableCredit)), amount);
+        // deposit into primary reserve
+        reservePool.depositIntoPrimaryReserve(
+            address(stableCredit), address(stableCredit.referenceToken()), amount
+        );
+        // check total reserve
+        assertEq(
+            reservePool.totalReserveOf(
+                address(stableCredit), address(stableCredit.referenceToken())
+            ),
+            amount
+        );
+        // check primary reserve
+        assertEq(
+            reservePool.primaryReserve(
+                address(stableCredit), address(stableCredit.referenceToken())
+            ),
+            amount
+        );
         vm.stopPrank();
     }
 
-    // deposit payment updates payment updates payment reserve
-    function testDepositPayment() public {
-        // deposit reserve updates reserve in reserve pool
+    // deposit into peripheral reserve updates total reserve and peripheral reserve
+    function testDepositIntoPeripheralReserve() public {
         vm.startPrank(deployer);
         uint256 amount = 100;
+        // approve reference token
         stableCredit.referenceToken().approve(address(riskManager), amount);
-        reservePool.depositPayment(address(stableCredit), amount);
-        assertEq(reservePool.reserveOf(address(stableCredit)), amount);
-        assertEq(reservePool.paymentReserve(address(stableCredit)), amount);
+        // deposit into peripheral reserve
+        reservePool.depositIntoPeripheralReserve(
+            address(stableCredit), address(stableCredit.referenceToken()), amount
+        );
+        // check total reserve
+        assertEq(
+            reservePool.totalReserveOf(
+                address(stableCredit), address(stableCredit.referenceToken())
+            ),
+            amount
+        );
+        // check peripheral reserve
+        assertEq(
+            reservePool.peripheralReserve(
+                address(stableCredit), address(stableCredit.referenceToken())
+            ),
+            amount
+        );
         vm.stopPrank();
     }
 
-    // deposit fees updates oeprator pool when RTD is above target
-    function testDepositFeesWithHighRTD() public {
+    // deposit needed reserves updates excess pool when RTD is above target
+    function testDepositNeededWithHighRTD() public {
         // deposit fees updates fees in reserve pool
         vm.startPrank(deployer);
         uint256 amount = 100;
+        // approve reference token
         stableCredit.referenceToken().approve(address(riskManager), amount);
-        riskManager.depositFees(address(stableCredit), amount);
-        assertEq(reservePool.operatorPool(address(stableCredit)), amount);
+        // deposit into needed reserve
+        reservePool.depositIntoNeededReserve(
+            address(stableCredit), address(stableCredit.referenceToken()), amount
+        );
+        // check excess reserve
+        assertEq(
+            reservePool.excessReserve(address(stableCredit), address(stableCredit.referenceToken())),
+            amount
+        );
         vm.stopPrank();
     }
 
@@ -55,9 +94,26 @@ contract ReservePoolTest is ReSourceTest {
         vm.stopPrank();
         vm.startPrank(deployer);
         uint256 amount = 100;
+        // approve reference token
         stableCredit.referenceToken().approve(address(riskManager), amount);
-        riskManager.depositFees(address(stableCredit), amount);
-        assertEq(reservePool.reserveOf(address(stableCredit)), amount);
+        // deposit into needed reserve
+        reservePool.depositIntoNeededReserve(
+            address(stableCredit), address(stableCredit.referenceToken()), amount
+        );
+        assertEq(
+            reservePool.totalReserveOf(
+                address(stableCredit), address(stableCredit.referenceToken())
+            ),
+            amount
+        );
+        vm.stopPrank();
+    }
+
+    function testUpdateBaseFeeRate() public {
+        // update base fee rate
+        vm.startPrank(deployer);
+        reservePool.setBaseFeeRate(address(stableCredit), 10000);
+        assertEq(reservePool.baseFeeRate(address(stableCredit)), 10000);
         vm.stopPrank();
     }
 }

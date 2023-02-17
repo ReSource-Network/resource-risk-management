@@ -58,20 +58,25 @@ contract ReSourceTest is Test {
         // deploy stable credit network
         stableCredit = new StableCredit();
         stableCredit.__StableCredit_init(
-            address(referenceToken), address(accessManager), address(creditIssuer), "mock", "MOCK"
+            address(referenceToken),
+            address(accessManager),
+            address(reservePool),
+            address(creditIssuer),
+            "mock",
+            "MOCK"
         );
         //deploy feeManager
         feeManager = new FeeManager();
         feeManager.initialize(address(stableCredit));
         // initialize contract variables
         accessManager.grantOperator(address(stableCredit));
-        reservePool.setTargetRTD(address(stableCredit), 200000); // set targetRTD to 20%
+        accessManager.grantOperator(address(creditIssuer));
+        reservePool.setTargetRTD(address(stableCredit), address(referenceToken), 200000); // set targetRTD to 20%
         creditIssuer.setPeriodLength(address(stableCredit), 90 days); // set defaultCutoff to 90 days
         creditIssuer.setGracePeriodLength(address(stableCredit), 30 days); // set gracePeriod to 30 days
         creditIssuer.setMinITD(address(stableCredit), 100000); // set max income to debt ratio to 10%
-        riskManager.setBaseFeeRate(address(stableCredit), 50000); // set base fee rate to 5%
+        reservePool.setBaseFeeRate(address(stableCredit), 50000); // set base fee rate to 5%
         stableCredit.setFeeManager(address(feeManager));
-        stableCredit.setRiskManager(address(riskManager));
         vm.stopPrank();
     }
 }

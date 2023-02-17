@@ -111,8 +111,8 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
         assertEq(creditIssuer.creditTermsOf(address(stableCredit), alice).periodIncome, 10000000);
         // assert period is not expired
         assertTrue(!creditIssuer.periodExpired(address(stableCredit), alice));
-        // advance time to expiration
-        vm.warp(block.timestamp + 90 days + 1);
+        // advance time to expiration + grace period length (30 days)
+        vm.warp(block.timestamp + 120 days + 1);
         vm.stopPrank();
         vm.startPrank(alice);
         // assert period income is still 10 credits before member validation
@@ -138,7 +138,7 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
         assertTrue(creditIssuer.creditTermsOf(address(stableCredit), alice).rebalanced);
         assertTrue(!creditIssuer.periodExpired(address(stableCredit), alice));
         // advance time to expiration
-        vm.warp(block.timestamp + 90 days + 1);
+        vm.warp(block.timestamp + 120 days + 1);
         vm.stopPrank();
         vm.startPrank(alice);
         // check that period is expired
@@ -162,7 +162,7 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
 
         vm.stopPrank();
         // advance time to expiration
-        vm.warp(block.timestamp + 90 days + 1);
+        vm.warp(block.timestamp + 120 days + 1);
         vm.startPrank(alice);
         // assert period is expired
         assertTrue(creditIssuer.periodExpired(address(stableCredit), alice));
@@ -171,7 +171,7 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
         // check that alice's credit period has been renewed
         assertEq(
             creditIssuer.periodExpirationOf(address(stableCredit), alice),
-            aliceExpiration + 90 days + 1
+            aliceExpiration + 120 days + 1
         );
         // check credit line is unaltered
         assertEq(
@@ -419,6 +419,8 @@ contract ReSourceCreditIssuerTest is ReSourceTest {
             20 * (10 ** IERC20Metadata(address(stableCredit)).decimals())
         );
     }
+
+    // TODO: testDefaultRevokesMembership
 
     // TODO: testUnderwriteMember
 }

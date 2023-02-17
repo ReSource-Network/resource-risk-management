@@ -11,37 +11,6 @@ contract RiskManagerTest is ReSourceTest {
         vm.stopPrank();
     }
 
-    // deposit fees updates reserve
-    function testDepositFeesFillsOperatorPool() public {
-        // deposit fees updates fees in reserve pool
-        vm.startPrank(deployer);
-        uint256 amount = 100;
-        stableCredit.referenceToken().approve(address(riskManager), amount);
-        riskManager.depositFees(address(stableCredit), amount);
-        assertEq(reservePool.operatorPool(address(stableCredit)), amount);
-        vm.stopPrank();
-    }
-
-    // deposit payment updates payment reserve in reserve pool
-    function testDepositPaymentFillsPaymentReserve() public {
-        // deposit fees updates fees in reserve pool
-        vm.startPrank(deployer);
-        uint256 amount = 100;
-        stableCredit.referenceToken().approve(address(riskManager), amount);
-        riskManager.depositPayment(address(stableCredit), amount);
-        assertEq(reservePool.reserveOf(address(stableCredit)), amount);
-        assertEq(reservePool.paymentReserve(address(stableCredit)), amount);
-        vm.stopPrank();
-    }
-
-    function testUpdateBaseFeeRate() public {
-        // update base fee rate
-        vm.startPrank(deployer);
-        riskManager.setBaseFeeRate(address(stableCredit), 10000);
-        assertEq(riskManager.baseFeeRate(address(stableCredit)), 10000);
-        vm.stopPrank();
-    }
-
     // TODO: testSyncRisk function
     //      uses predicted default rate provided by RiskOracle to update baseFeeRate and targetRTD
 }

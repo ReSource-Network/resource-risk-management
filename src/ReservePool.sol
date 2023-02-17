@@ -7,31 +7,40 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@resource-stable-credit/interface/IStableCredit.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interface/IReservePool.sol";
 
 /// @title ReservePool
 /// @author ReSource
-/// @notice Stores and transfers collected reference tokens according to network reserve
+/// @notice Stores and manages reserve tokens according to reserve
 /// configurations set by the RiskManager.
 contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== CONSTANTS ========== */
 
+    /// @dev Maximum parts per million
     uint32 private constant MAX_PPM = 1000000;
 
     /* ========== STATE VARIABLES ========== */
 
     address public riskManager;
-    // network => reserve
-    mapping(address => uint256) public reserve;
-    // network => paymentReserve
-    mapping(address => uint256) public paymentReserve;
-    // network => operatorPool
-    mapping(address => uint256) public operatorPool;
-    // network => targetRTD
-    mapping(address => uint256) public targetRTD;
+
+    /// @notice primary reserve of a given credit token
+    /// @dev credit token => reserve token => reserve
+    mapping(address => mapping(address => uint256)) public primaryReserve;
+    /// @notice peripheral reserve of a given credit token
+    /// @dev credit token => reserve token => peripheral reserve
+    mapping(address => mapping(address => uint256)) public peripheralReserve;
+    /// @notice excess reserve of a given credit token
+    /// @dev credit token => reserve token => excess reserve
+    mapping(address => mapping(address => uint256)) public excessReserve;
+    /// @notice target reserve to debt ratio of a given credit token
+    /// @dev credit token => reserve token => target RTD
+    mapping(address => mapping(address => uint256)) public targetRTD;
+    /// @notice base fee rate of a given credit token transfer
+    /// @dev credit token => base fee rate
+    mapping(address => uint256) public baseFeeRate;
 
     /* ========== INITIALIZER ========== */
 
@@ -43,127 +52,283 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    /// @notice Deposits reference tokens to a networks reserve
-    /// @dev caller must approve reference tokens to be spent by this contract
-    function depositReserve(address network, uint256 amount) public nonReentrant {
+    /// @notice enables caller to deposit a given reserve token into a credit token's
+    /// primary reserve.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param amount amount of reserve token to deposit.
+    function depositIntoPrimaryReserve(address creditToken, address reserveToken, uint256 amount)
+        public
+    {
         require(amount > 0, "ReservePool: Cannot deposit 0");
-        reserve[network] += amount;
-        IStableCredit(network).referenceToken().safeTransferFrom(msg.sender, address(this), amount);
+        // add deposit to primary reserve
+        primaryReserve[creditToken][reserveToken] += amount;
+        // collect reserve token deposit from caller
+        IERC20Upgradeable(reserveToken).safeTransferFrom(msg.sender, address(this), amount);
+        emit PrimaryReserveDeposited(creditToken, reserveToken, amount);
     }
 
-    /// @notice Deposits reference tokens to a networks paymentReserve
-    /// @dev caller must approve reference tokens to be spent by this contract
-    function depositPayment(address network, uint256 amount) public override nonReentrant {
+    /// @notice enables caller to deposit a given reserve token into a credit token's
+    /// peripheral reserve.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param amount amount of reserve token to deposit.
+    function depositIntoPeripheralReserve(address creditToken, address reserveToken, uint256 amount)
+        public
+        override
+        nonReentrant
+    {
         require(amount > 0, "ReservePool: Cannot deposit 0");
-        paymentReserve[network] += amount;
-        IStableCredit(network).referenceToken().safeTransferFrom(msg.sender, address(this), amount);
+        // add deposit to peripheral reserve
+        peripheralReserve[creditToken][reserveToken] += amount;
+        // collect reserve token deposit from caller
+        IERC20Upgradeable(reserveToken).safeTransferFrom(msg.sender, address(this), amount);
+        emit PeripheralReserveDeposited(creditToken, reserveToken, amount);
     }
 
-    /// @dev Called by FeeManager when collected fees are distributed. Will
-    /// split deposited fees betweeen the reserve, operatorReserve and swapReserve.
-    function depositFees(address network, uint256 amount) public override nonReentrant {
-        require(amount > 0, "ReservePool: Cannot deposit 0");
-        IStableCredit(network).referenceToken().safeTransferFrom(msg.sender, address(this), amount);
-        uint256 neededReserves = getNeededReserves(network);
+    /// @notice enables caller to deposit a given reserve token into a credit token's
+    /// excess reserve.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param amount amount of reserve token to deposit.
+    function depositIntoExcessReserve(address creditToken, address reserveToken, uint256 amount)
+        public
+    {
+        // collect remaining amount from caller
+        IERC20Upgradeable(reserveToken).safeTransferFrom(msg.sender, address(this), amount);
+        // deposit remaining amount into excess reserve
+        excessReserve[creditToken][reserveToken] += amount;
+        emit ExcessReserveDeposited(creditToken, reserveToken, amount);
+    }
+
+    /// @notice enables caller to deposit a given reserve token into a credit token's
+    /// needed reserve. Deposits flow into the primary reserve until the the target RTD
+    // threshold has been reached, after which the remaining amount is deposited into the excess reserve.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param amount amount of reserve token to deposit.
+    function depositIntoNeededReserve(address creditToken, address reserveToken, uint256 amount)
+        public
+        override
+        nonReentrant
+    {
+        uint256 neededReserves = getNeededReserves(creditToken, reserveToken);
+        // if neededReserve is greater than amount, deposit full amount into primary reserve
         if (neededReserves > amount) {
-            reserve[network] += amount;
+            depositIntoPrimaryReserve(creditToken, reserveToken, amount);
             return;
         }
-        reserve[network] += neededReserves;
-        operatorPool[network] += amount - neededReserves;
+        // deposit neededReserves into primary reserve
+        if (neededReserves > 0) {
+            depositIntoPrimaryReserve(creditToken, reserveToken, neededReserves);
+        }
+        // deposit remaining amount into excess reserve
+        depositIntoExcessReserve(creditToken, reserveToken, amount - neededReserves);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    /// @dev caller must have operator access
-    function withdrawOperator(address network, uint256 amount)
+    /// @notice enables caller to withdraw a given reserve token from a credit token's excess reserve.
+    /// @dev The credit token implementation should expose an access controlled function that federates
+    /// calls to this function.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param amount amount reference tokens to withdraw from given credit token's excess reserve.
+    function withdrawFromExcessReserve(address creditToken, address reserveToken, uint256 amount)
         public
         nonReentrant
-        onlyOperator(msg.sender)
+        onlyCreditToken(creditToken)
     {
         require(amount > 0, "ReservePool: Cannot withdraw 0");
-        require(amount <= operatorPool[network], "ReservePool: Insufficient operator pool");
-        operatorPool[network] -= amount;
-        IStableCredit(network).referenceToken().safeTransfer(msg.sender, amount);
+        require(
+            amount <= excessReserve[creditToken][reserveToken],
+            "ReservePool: Insufficient excess reserve"
+        );
+        // reduce excess reserve
+        excessReserve[creditToken][reserveToken] -= amount;
+        // transfer reserve token to caller
+        IERC20Upgradeable(reserveToken).safeTransferFrom(msg.sender, address(this), amount);
+        emit ExcessReserveWithdrawn(creditToken, reserveToken, amount);
     }
 
-    /// @notice called by the stable credit contract when members burn away bad credits
-    /// @param member member to reimburse
-    /// @param amount amount of credits to reimburse in reference tokens
-    function reimburseMember(address network, address member, uint256 amount)
+    /// @notice Called by the credit token implementation to reimburse an account from the credit token's
+    /// reserves. If the amount is covered by the peripheral reserve, the peripheral reserve is depleted first,
+    /// followed by the primary reserve.
+    /// @dev The credit token implementation should not expose this function to the public as it could be
+    /// exploited to drain the credit token's reserves.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param account address to reimburse from credit token's reserves.
+    /// @param amount amount reference tokens to withdraw from given credit token's excess reserve.
+    function reimburseAccount(
+        address creditToken,
+        address reserveToken,
+        address account,
+        uint256 amount
+    ) external override onlyCreditToken(creditToken) nonReentrant {
+        // if no reserves, return
+        if (totalReserveOf(creditToken, reserveToken) == 0) return;
+        // if amount is covered by peripheral, reimburse only from peripheral
+        if (amount < peripheralReserve[creditToken][reserveToken]) {
+            peripheralReserve[creditToken][reserveToken] -= amount;
+            // if amount is covered by primary, reimburse only from primary
+        } else if (amount < totalReserveOf(creditToken, reserveToken)) {
+            primaryReserve[creditToken][reserveToken] -=
+                amount - peripheralReserve[creditToken][reserveToken];
+            peripheralReserve[creditToken][reserveToken] = 0;
+            // use both reserves to cover amount
+        } else {
+            // get total reserve amount
+            uint256 reserveAmount = totalReserveOf(creditToken, reserveToken);
+            // empty both reserves
+            peripheralReserve[creditToken][reserveToken] = 0;
+            primaryReserve[creditToken][reserveToken] = 0;
+            // set amount to available reserves
+            amount = reserveAmount;
+        }
+        // transfer given amount to account
+        IERC20Upgradeable(reserveToken).transfer(account, amount);
+        emit AccountReimbursed(creditToken, reserveToken, account, amount);
+    }
+
+    /// @notice This function allows the risk manager to set the target RTD for a given credit token.
+    /// If the target RTD is increased and there is excess reserve, the excess reserve is reallocated
+    /// to the primary reserve to attempt to reach the new target RTD.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param _targetRTD new target RTD.
+    function setTargetRTD(address creditToken, address reserveToken, uint256 _targetRTD)
         external
         override
-        onlyStableCredit(network)
-        nonReentrant
+        onlyRiskManager
     {
-        if (reserveOf(network) == 0) return;
-        // if reimbursement can happen from just paymentReserve
-        if (amount < paymentReserve[network]) {
-            paymentReserve[network] -= amount;
-            IStableCredit(network).referenceToken().transfer(member, amount);
-        } else if (amount < reserveOf(network)) {
-            reserve[network] -= amount - paymentReserve[network];
-            paymentReserve[network] = 0;
-            IStableCredit(network).referenceToken().transfer(member, amount);
-        } else {
-            uint256 reserveAmount = reserveOf(network);
-            paymentReserve[network] = 0;
-            reserve[network] = 0;
-            IStableCredit(network).referenceToken().transfer(member, reserveAmount);
+        // if increasing target RTD and there is excess reserves, reallocate excess reserve to primary
+        if (
+            _targetRTD > targetRTD[creditToken][reserveToken]
+                && excessReserve[creditToken][reserveToken] > 0
+        ) {
+            reallocateExcessReserve(creditToken, reserveToken);
         }
+        // update target RTD
+        targetRTD[creditToken][reserveToken] = _targetRTD;
     }
 
-    function setTargetRTD(address network, uint256 _targetRTD) external override onlyRiskManager {
-        require(_targetRTD <= MAX_PPM, "ReservePool: RTD must be less than 100%");
-        // realocate oporateorPool if any to reserve if targetRTD is increased
-        if (_targetRTD > targetRTD[network] && operatorPool[network] > 0) {
-            uint256 neededReserves = getNeededReserves(network);
-            if (neededReserves > operatorPool[network]) {
-                reserve[network] += operatorPool[network];
-                operatorPool[network] = 0;
-            } else {
-                reserve[network] += neededReserves;
-                operatorPool[network] -= neededReserves;
-            }
-        }
-        targetRTD[network] = _targetRTD;
+    /// @notice Enables the risk manager to update the given credit token's base fee rate. This
+    /// rate is supposed to be the calculated price of risk for the given credit token.
+    /// @param creditToken address of the credit token.
+    /// @param _baseFeeRate new base fee rate for the given credit token.
+    function setBaseFeeRate(address creditToken, uint256 _baseFeeRate) external onlyRiskManager {
+        baseFeeRate[creditToken] = _baseFeeRate;
     }
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    /// @return Reserve to debt ratio meassured in parts per million
-    function RTD(address network) public view returns (uint256) {
-        if (reserve[network] == 0) return reserve[network];
-        if (IERC20Upgradeable(network).totalSupply() == 0) return 0;
-        return (reserve[network] * MAX_PPM)
-            / IStableCredit(network).convertCreditToReferenceToken(
-                IERC20Upgradeable(network).totalSupply()
+    /// @notice returns the total amount of reserve tokens in the credit token's primary and peripheral reserves.
+    /// @param creditToken address of the credit token.
+    /// @return total amount of reserve tokens in the credit token's primary and peripheral reserves.
+    function totalReserveOf(address creditToken, address reserveToken)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            primaryReserve[creditToken][reserveToken] + peripheralReserve[creditToken][reserveToken];
+    }
+
+    /// @notice returns the ratio of primary reserve to total debt denominated in parts per million (PPM).
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @return ratio of primary reserve to total debt denominated in parts per million (PPM).
+    function RTD(address creditToken, address reserveToken) public view returns (uint256) {
+        // if primary reserve is empty return 0% RTD ratio
+        if (primaryReserve[creditToken][reserveToken] == 0) return 0;
+        // if credit token has no debt, return 0% RTD ratio
+        if (IERC20Upgradeable(creditToken).totalSupply() == 0) return 0;
+        // return primary reserve amount divided by total debt amount
+        return (primaryReserve[creditToken][reserveToken] * MAX_PPM)
+            / convertCreditTokenToReserveToken(
+                creditToken, reserveToken, IERC20Upgradeable(creditToken).totalSupply()
             );
     }
 
-    /// @return The current value of given network's reserve
-    function reserveOf(address network) public view returns (uint256) {
-        return reserve[network] + paymentReserve[network];
-    }
-
-    /// @return The total value of reserve needed to fill the reserve to the target RTD
-    function getNeededReserves(address network) public view returns (uint256) {
-        uint256 currentRTD = RTD(network);
-        if (currentRTD >= targetRTD[network]) return 0;
+    /// @notice returns the amount of reserve tokens needed for the primary reserve to reach the
+    //  target RTD.
+    /// @dev the returned amount is denominated in the reserve token
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @return amount of reserve tokens needed for the primary reserve to reach the target RTD.
+    function getNeededReserves(address creditToken, address reserveToken)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 currentRTD = RTD(creditToken, reserveToken);
+        // if current RTD is greater than target RTD, no needed reserves
+        if (currentRTD >= targetRTD[creditToken][reserveToken]) return 0;
+        // (target RTD - current RTD) * total debt amount
         return (
-            (targetRTD[network] - currentRTD)
-                * IStableCredit(network).convertCreditToReferenceToken(
-                    IERC20Upgradeable(network).totalSupply()
+            (targetRTD[creditToken][reserveToken] - currentRTD)
+                * convertCreditTokenToReserveToken(
+                    creditToken, reserveToken, IERC20Upgradeable(creditToken).totalSupply()
                 )
         ) / MAX_PPM;
     }
 
+    /// @notice converts the given credit token amount to the reserve token denomination.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @param amount credit token amount to convert to reserve currency denomination.
+    /// @return credit token amount converted to reserve currency denomination
+    function convertCreditTokenToReserveToken(
+        address creditToken,
+        address reserveToken,
+        uint256 amount
+    ) public view returns (uint256) {
+        if (amount == 0) return amount;
+        uint256 reserveDecimals = IERC20Metadata(reserveToken).decimals();
+        uint256 creditDecimals = IERC20Metadata(creditToken).decimals();
+        return creditDecimals < reserveDecimals
+            ? ((amount * 10 ** (reserveDecimals - creditDecimals)))
+            : ((amount / 10 ** (creditDecimals - reserveDecimals)));
+    }
+
+    /// @notice Returns the given credit token's base fee rate in parts per million (PPM).
+    /// This rate is supposed to be the calculated price of risk for the given credit token.
+    /// @param creditToken address of the credit token.
+    /// @return base fee rate of the given credit token.
+    function baseFeeRateOf(address creditToken) external view override returns (uint256) {
+        return baseFeeRate[creditToken];
+    }
+
+    /* ========== PRIVATE ========== */
+
+    /// @notice this function reallocates needed reserves from the excess reserve to the
+    /// primary reserve to attempt to reach the target RTD.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    function reallocateExcessReserve(address creditToken, address reserveToken) private {
+        uint256 neededReserves = getNeededReserves(creditToken, reserveToken);
+        if (neededReserves > excessReserve[creditToken][reserveToken]) {
+            primaryReserve[creditToken][reserveToken] += excessReserve[creditToken][reserveToken];
+            excessReserve[creditToken][reserveToken] = 0;
+        } else {
+            primaryReserve[creditToken][reserveToken] += neededReserves;
+            excessReserve[creditToken][reserveToken] -= neededReserves;
+        }
+        emit ExcessReallocated(
+            creditToken,
+            reserveToken,
+            excessReserve[creditToken][reserveToken],
+            primaryReserve[creditToken][reserveToken]
+            );
+    }
+
     /* ========== MODIFIERS ========== */
 
-    modifier onlyOperator(address network) {
+    modifier onlyCreditToken(address creditToken) {
         require(
-            IStableCredit(network).access().isOperator(msg.sender) || msg.sender == owner(),
-            "ReservePool: Caller is not operator"
+            creditToken == msg.sender || msg.sender == owner(),
+            "ReservePool: Caller is not reserve owner"
         );
         _;
     }
@@ -172,14 +337,6 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         require(
             msg.sender == riskManager || msg.sender == owner(),
             "ReservePool: Caller is not risk manager"
-        );
-        _;
-    }
-
-    modifier onlyStableCredit(address network) {
-        require(
-            msg.sender == network || msg.sender == owner(),
-            "ReservePool: Caller must be contract or owner"
         );
         _;
     }
