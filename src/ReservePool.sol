@@ -251,6 +251,16 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
             );
     }
 
+    /// @notice returns true if the credit token's primary reserve is greater than or equal to the target RTD.
+    /// @dev returns true if the credit token's primary reserve is greater than or equal to the target RTD.
+    /// @param creditToken address of the credit token.
+    /// @param reserveToken address of the reserve token.
+    /// @return true if the credit token's primary reserve is greater than or equal to the target RTD.
+    function hasValidRTD(address creditToken, address reserveToken) public view returns (bool) {
+        // if current RTD is greater than target RTD, return false
+        return RTD(creditToken, reserveToken) >= targetRTD[creditToken][reserveToken];
+    }
+
     /// @notice returns the amount of reserve tokens needed for the primary reserve to reach the
     //  target RTD.
     /// @dev the returned amount is denominated in the reserve token
@@ -262,12 +272,10 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         view
         returns (uint256)
     {
-        uint256 currentRTD = RTD(creditToken, reserveToken);
-        // if current RTD is greater than target RTD, no needed reserves
-        if (currentRTD >= targetRTD[creditToken][reserveToken]) return 0;
+        if (hasValidRTD(creditToken, reserveToken)) return 0;
         // (target RTD - current RTD) * total debt amount
         return (
-            (targetRTD[creditToken][reserveToken] - currentRTD)
+            (targetRTD[creditToken][reserveToken] - RTD(creditToken, reserveToken))
                 * convertCreditTokenToReserveToken(
                     creditToken, reserveToken, IERC20Upgradeable(creditToken).totalSupply()
                 )

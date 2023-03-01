@@ -58,7 +58,7 @@ contract CreditIssuer is ICreditIssuer, PausableUpgradeable, OwnableUpgradeable 
     /* ========== VIEWS ========== */
 
     /// @notice fetches a given member's current credit standing in relation to the credit terms.
-    /// @dev intended to be overwritten in parent implementation to include standing validation logic.
+    /// @dev intended to be overwritten in parent implementation to include good standing validation logic.
     /// @param network address of stable credit network.
     /// @param member address of member to fetch standing status for.
     /// @return whether the given member is in good standing.

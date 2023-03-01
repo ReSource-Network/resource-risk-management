@@ -9,17 +9,25 @@
 
 # ⚠️ ReSource Risk Management
 
-The following decentralized infrustrucutre is responsible for providing **ReSource Stable Credit** networks with the means to analyze, predict, and mitigate credit risk within a mutual credit context.
+The following decentralized infrastructure is responsible for providing **Credit Networks** with the means to analyze, predict, and mitigate credit risk within a mutual credit context.
 
-To accomplish this, this protocol interfaces with the **ReSource Stable Credit** protocol and **Masa Finance** protocol.
+Risk can be thought of in two categories: **network wide risk** and **member specific risk.**
 
-📕 For more information on ReSource and Stable Credits go to https://www.resource.finance/
+####Network Risk
+Network risk is addressed via a **Risk Oracle** infrastructure that is responsible for monitoring and analyzing network risks in order to calculate a given network's _risk variables_. These variables include the price of risk (the network's "base fee") as well as the required reserve size (the network's "RTD") needed to safely maintain stability.
+
+The **Risk Oracle** infrastructure is federated by a network registry that determines if a network's risk is being indexed and analyzed. The risk analysis provided by the **_RiskOracle.sol_** is then used by the **_RiskManager.sol_** contract to translate analyzed risk into the network _risk variables_.
+
+####Member Risk
+Member risk is addressed through effective underwriting and proper credit term structuring and assignment. The **_CreditIssuer.sol_** contract is responsible for defining and issuing the credit terms (ex. credit limit, fee rate) associated with a given network to be tracked over a configured _credit period_.
+
+📕 For more information on ReSource Risk Mitigation go to the [docs](https://docs.stablecredit.io/stable-credit/credit-risk).
 
 ## Protocol Overview
 
 ---
 
-The following diagram depicts how **Stable Credit Networks** interact with the **ReSource Risk Managment** protocol to stabalize their credit currencies.  
+The following diagram depicts how **Stable Credit Networks** interact with the **ReSource Risk Management** protocol to stabilize their credit currencies.  
 ![alt text](./Diagram.png)
 
 ---
@@ -27,13 +35,15 @@ The following diagram depicts how **Stable Credit Networks** interact with the *
 ## Contracts:
 
 - **`RiskManager.sol`**: Responsible for referencing risk analysis provided by the `RiskOracle` contract to update network risk variables (ex. BaseFee, target RTD).
-- **`ReservePool.sol`**: Responsible for storing and transfering network reference tokens.
+- **`ReservePool.sol`**: Responsible for storing and transferring network reference tokens.
 - **`RiskOracle.sol`**: Responsible for exposing .
 - **`CreditIssuer.sol`**: Responsible for underwriting network participants to issue credit terms (note: base implementation intended to be extended)
+- **`ReSourceCreditIssuer.sol`** Example custom CreditIssuer contract with minimum DTI and unbalancing credit terms.
 
 # 🏄‍♂️ Quick Start
 
-This project uses [Foundry](https://github.com/foundry-rs/foundry) as the development framework.
+This project uses [Foundry](https://github.com/foundry-rs/foundry) as the development framework and [Hardhat](https://github.com/NomicFoundation/hardhat) for the deployment framework.
+
 ####Dependencies
 
 ```bash
@@ -55,5 +65,5 @@ forge test
 ####Deploy
 
 ```bash
-TODO
+yarn deploy
 ```

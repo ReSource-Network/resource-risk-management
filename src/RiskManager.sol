@@ -22,9 +22,9 @@ contract RiskManager is OwnableUpgradeable, IRiskManager {
 
     /* ========== PUBLIC FUNCTIONS ========== */
 
+    // TODO: implement
     function syncRiskVariables(address network) external {
-        // TODO: implement this
-        // retrieve RiskOracle's current predicted network default rate
+        // retrieve network's current predicted network default rate from RiskOracle
         // translate predicted default rate to newTargetRTD and newBaseFeeRate
         // reservePool.setTargetRTD(network, newTargetRTD)
         // baseFeeRate[network] = newBaseFeeRate

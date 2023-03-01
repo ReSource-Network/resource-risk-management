@@ -7,9 +7,7 @@ import "../interface/IReSourceCreditIssuer.sol";
 /// @title ReSourceCreditIssuer
 /// @author ReSource
 /// @notice This contract enables authorized network participants to autonomously underwrite new
-/// and existing members in order to issue credit lines and their associated credit terms. For more
-/// information about credit term mechanisms, go to
-/// https://docs.resource.finance/stable-credit/credit-risk/default-management
+/// and existing members in order to issue credit lines and their associated credit terms.
 /// @dev This contract inherits from the base CreditIssuer contract and implements the fundamental
 /// logic for credit periods and period expiration.
 contract ReSourceCreditIssuer is CreditIssuer, IReSourceCreditIssuer {
