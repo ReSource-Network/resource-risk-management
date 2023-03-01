@@ -61,4 +61,6 @@ interface IReservePool {
     event AccountReimbursed(
         address creditToken, address reserveToken, address account, uint256 amount
     );
+    event TargetRTDUpdated(address creditToken, address reserveToken, uint256 newTargetRTD);
+    event BaseFeeRateUpdated(address creditToken, uint256 baseFeeRate);
 }

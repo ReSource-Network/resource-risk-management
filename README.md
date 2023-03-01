@@ -27,7 +27,7 @@ Member risk is addressed through effective underwriting and proper credit term s
 
 ---
 
-The following diagram depicts how **Stable Credit Networks** interact with the **ReSource Risk Management** protocol to stabilize their credit currencies.  
+The following diagram depicts how **Stable Credit** networks interact with the **ReSource Risk Management** protocol to stabilize their credit currencies.
 ![alt text](./Diagram.png)
 
 ---
@@ -35,10 +35,10 @@ The following diagram depicts how **Stable Credit Networks** interact with the *
 ## Contracts:
 
 - **`RiskManager.sol`**: Responsible for referencing risk analysis provided by the `RiskOracle` contract to update network risk variables (ex. BaseFee, target RTD).
-- **`ReservePool.sol`**: Responsible for storing and transferring network reference tokens.
-- **`RiskOracle.sol`**: Responsible for exposing .
+- **`ReservePool.sol`**: Responsible for storing and transferring network reference tokens in order to back the credit currency.
+- **`RiskOracle.sol`**: Responsible for exposing calculated network risk data.
 - **`CreditIssuer.sol`**: Responsible for underwriting network participants to issue credit terms (note: base implementation intended to be extended)
-- **`ReSourceCreditIssuer.sol`** Example custom CreditIssuer contract with minimum DTI and unbalancing credit terms.
+- **`ReSourceCreditIssuer.sol`** Example extended **CreditIssuer** contract with custom credit terms including minimum ITD (Income to Debt ratio) and credit re-balancing.
 
 # 🏄‍♂️ Quick Start
 

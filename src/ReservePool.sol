@@ -211,6 +211,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         }
         // update target RTD
         targetRTD[creditToken][reserveToken] = _targetRTD;
+        emit TargetRTDUpdated(creditToken, reserveToken, _targetRTD);
     }
 
     /// @notice Enables the risk manager to update the given credit token's base fee rate. This
@@ -219,6 +220,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /// @param _baseFeeRate new base fee rate for the given credit token.
     function setBaseFeeRate(address creditToken, uint256 _baseFeeRate) external onlyRiskManager {
         baseFeeRate[creditToken] = _baseFeeRate;
+        emit BaseFeeRateUpdated(creditToken, _baseFeeRate);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
