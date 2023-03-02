@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import "../src/RiskManager.sol";
-import "../src/ReservePool.sol";
-import "../src/RiskOracle.sol";
-import "../src/CreditIssuer/ReSourceCreditIssuer.sol";
+import "../contracts/RiskManager.sol";
+import "../contracts/ReservePool.sol";
+import "../contracts/RiskOracle.sol";
+import "../contracts/CreditIssuer/ReSourceCreditIssuer.sol";
 import "./MockERC20.sol";
 import "@resource-stable-credit/StableCredit.sol";
 import "@resource-stable-credit/AccessManager.sol";

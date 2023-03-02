@@ -1,10 +1,9 @@
 const fs = require("fs")
 const chalk = require("chalk")
-
+import "hardhat-deploy"
 import "@nomiclabs/hardhat-waffle"
 import "@typechain/hardhat"
 import "@tenderly/hardhat-tenderly"
-import "hardhat-deploy"
 import "@openzeppelin/hardhat-upgrades"
 import "hardhat-gas-reporter"
 import "solidity-coverage"
@@ -184,3 +183,11 @@ task("send", "Send ETH")
 
     return send(fromSigner, txRequest)
   })
+
+function getRemappings() {
+  return fs
+    .readFileSync("remappings.txt", "utf8")
+    .split("\n")
+    .filter(Boolean) // remove empty lines
+    .map((line) => line.trim().split("="))
+}
