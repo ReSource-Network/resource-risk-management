@@ -1,6 +1,7 @@
 const fs = require("fs")
 const chalk = require("chalk")
 import "hardhat-deploy"
+import "hardhat-preprocessor"
 import "@nomiclabs/hardhat-waffle"
 import "@typechain/hardhat"
 import "@tenderly/hardhat-tenderly"
@@ -97,6 +98,20 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0,
     },
+  },
+  preprocess: {
+    eachLine: (hre) => ({
+      transform: (line) => {
+        if (line.match(/^\s*import /i)) {
+          getRemappings().forEach(([find, replace]) => {
+            if (line.match(find)) {
+              line = line.replace(find, replace)
+            }
+          })
+        }
+        return line
+      },
+    }),
   },
   paths: {
     artifacts: "./artifacts",

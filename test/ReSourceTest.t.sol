@@ -10,7 +10,7 @@ import "../contracts/CreditIssuer/ReSourceCreditIssuer.sol";
 import "./MockERC20.sol";
 import "@resource-stable-credit/StableCredit.sol";
 import "@resource-stable-credit/AccessManager.sol";
-import "@resource-stable-credit/FeeManager/FeeManager.sol";
+import "@resource-stable-credit/FeeManager/ReSourceFeeManager.sol";
 
 contract ReSourceTest is Test {
     address alice;
@@ -26,7 +26,7 @@ contract ReSourceTest is Test {
     // stable credit network contracts
     StableCredit public stableCredit;
     AccessManager public accessManager;
-    FeeManager public feeManager;
+    ReSourceFeeManager public feeManager;
 
     function setUpReSourceTest() public {
         alice = address(2);
@@ -66,7 +66,7 @@ contract ReSourceTest is Test {
             "MOCK"
         );
         //deploy feeManager
-        feeManager = new FeeManager();
+        feeManager = new ReSourceFeeManager();
         feeManager.initialize(address(stableCredit));
         // initialize contract variables
         accessManager.grantOperator(address(stableCredit));
