@@ -1,6 +1,7 @@
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@resource-risk-management-test/=test/
+@resource-risk-management/=contracts/
 @resource-stable-credit/=lib/stable-credit/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
-@resource-risk-management=contracts/
