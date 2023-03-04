@@ -46,6 +46,10 @@ This project uses [Foundry](https://github.com/foundry-rs/foundry) as the develo
 
 ####Dependencies
 
+```
+yarn install
+```
+
 ```bash
 forge install
 ```

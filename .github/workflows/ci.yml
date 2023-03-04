@@ -19,8 +19,11 @@ jobs:
         with:
           version: nightly
 
-      - name: Install deps
+      - name: Install forge
         run: forge install
+
+      - name: Install yarn
+        run: yarn install
 
       - name: Run tests
         run: forge test
