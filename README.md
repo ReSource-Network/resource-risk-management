@@ -34,17 +34,15 @@ The following diagram depicts how **Stable Credit** networks interact with the *
 
 ## Contracts:
 
-- **`RiskManager.sol`**: Responsible for referencing risk analysis provided by the `RiskOracle` contract to update network risk variables (ex. BaseFee, target RTD).
 - **`ReservePool.sol`**: Responsible for storing and transferring network reference tokens in order to back the credit currency.
+- **`ReserveRegistry.sol`**: Responsible for maintaining a list of reserves that are to be analyzed and maintained by the ReSource Risk Management infrastructure.
 - **`RiskOracle.sol`**: Responsible for exposing calculated network risk data.
-- **`CreditIssuer.sol`**: Responsible for underwriting network participants to issue credit terms (note: base implementation intended to be extended)
-- **`ReSourceCreditIssuer.sol`** Example extended **CreditIssuer** contract with custom credit terms including minimum ITD (Income to Debt ratio) and credit re-balancing.
 
 # 🏄‍♂️ Quick Start
 
 This project uses [Foundry](https://github.com/foundry-rs/foundry) as the development framework and [Hardhat](https://github.com/NomicFoundation/hardhat) for the deployment framework.
 
-####Dependencies
+#### Dependencies
 
 ```
 yarn install
@@ -54,19 +52,19 @@ yarn install
 forge install
 ```
 
-####Compilation
+#### Compilation
 
 ```bash
 forge build
 ```
 
-####Testing
+#### Testing
 
 ```bash
 forge test
 ```
 
-####Deploy
+#### Deploy
 
 ```bash
 yarn deploy
