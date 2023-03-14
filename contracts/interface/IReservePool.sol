@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./IRiskOracle.sol";
 
 interface IReservePool {
@@ -39,6 +40,10 @@ interface IReservePool {
     /// @return the risk oracle interface of the reserve pool
     function riskOracle() external view returns (IRiskOracle);
 
+    /// @notice Exposes the ERC20 interface of the reserve token.
+    /// @return the reserve token of the reserve pool.
+    function reserveToken() external view returns (IERC20Upgradeable);
+
     /* ========== EVENTS ========== */
 
     event ExcessReallocated(uint256 excessReserve, uint256 primaryReserve);
@@ -49,4 +54,5 @@ interface IReservePool {
     event AccountReimbursed(address account, uint256 amount);
     event TargetRTDUpdated(uint256 newTargetRTD);
     event ReserveTokenUpdated(address newReserveToken);
+    event RiskOracleUpdated(address riskOracle);
 }
