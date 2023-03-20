@@ -9,19 +9,13 @@
 
 # ⚠️ ReSource Risk Management
 
-The following decentralized infrastructure is responsible for providing **Credit Networks** with the means to analyze, predict, and mitigate credit risk within a mutual credit context.
+The following decentralized infrastructure is responsible for providing on-chain credit networks with the means to autonomously manage credit risk. This is achieved by enabling credit networks to contribute to a **Reserve** that is responsible for storing reserve deposits that are to be used to incentives the reduction of bad debt. For an example of how an on-chain credit network can manage bad debt, check out the [ReSource Stable Credit Protocol](https://github.com/resourcefinance/stable-credit).
 
-Risk can be thought of in two categories: **network wide risk** and **member specific risk.**
+#### Analyze, Predict, Mitigate
 
-####Network Risk
-Network risk is addressed via a **Risk Oracle** infrastructure that is responsible for monitoring and analyzing network risks in order to calculate a given network's _risk variables_. These variables include the price of risk (the network's "base fee") as well as the required reserve size (the network's "RTD") needed to safely maintain stability.
+Credit risk is mitigated by monitoring and analyzing a given credit network in order to calculate both the needed reserve size, as well as the rate at which it is filled with deposits. The size of a given reserve is measured by its **Reserve To Debt Ratio** (`RTD`) and the deposit rate is translated to a `baseFee` that should be charged per credit tx at any given moment.
 
-The **Risk Oracle** infrastructure is federated by a network registry that determines if a network's risk is being indexed and analyzed. The risk analysis provided by the **_RiskOracle.sol_** is then used by the **_RiskManager.sol_** contract to translate analyzed risk into the network _risk variables_.
-
-####Member Risk
-Member risk is addressed through effective underwriting and proper credit term structuring and assignment. The **_CreditIssuer.sol_** contract is responsible for defining and issuing the credit terms (ex. credit limit, fee rate) associated with a given network to be tracked over a configured _credit period_.
-
-📕 For more information on ReSource Risk Mitigation go to the [docs](https://docs.stablecredit.io/stable-credit/credit-risk).
+📕 For more information on **ReSource Risk Mitigation** go to the [docs](https://docs.resource.finance/stable-credit/credit-risk).
 
 ## Protocol Overview
 
