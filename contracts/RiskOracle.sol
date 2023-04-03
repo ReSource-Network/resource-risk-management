@@ -23,7 +23,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
     /// @notice Enables the risk manager to update the given credit token's base fee rate. This
     /// rate is supposed to be the calculated price of risk for the given credit token.
     /// @param creditToken address of the credit token.
-    /// @param _baseFeeRate new base fee rate for the given credit token denominated in the SCALING_FACTOR.
+    /// @param _baseFeeRate new base fee rate for the given credit token, where 1e18 == 100%.
     function setBaseFeeRate(address creditToken, uint256 _baseFeeRate) external onlyOperator {
         baseFeeRate[creditToken] = _baseFeeRate;
         emit BaseFeeRateUpdated(creditToken, _baseFeeRate);
@@ -33,7 +33,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
     /// conversion rate dictates the desired rate between the credit currency and the reference currency.
     /// @dev if the conversion rate is unset, the default conversion rate is 1 to 1.
     /// @param reservePool address of the reserve pool.
-    /// @param _conversionRate new conversion rate for the given reserve pool denominated in the SCALING_FACTOR.
+    /// @param _conversionRate new conversion rate for the given reserve pool, where 1e18 == 100%.
     function setReserveConversionRate(address reservePool, uint256 _conversionRate)
         external
         onlyOperator
@@ -44,7 +44,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
 
     /// @notice Returns the conversion rate between a reserve's currency and its credit network currency.
     /// @param reservePool address of the reserve pool to retrieve the conversion rate for.
-    /// @return Conversion rate between credit currency and reference currency measured in the SCALING_FACTOR.
+    /// @return Conversion rate between credit currency and reference currency, where 1e18 == 100%.
     function reserveConversionRateOf(address reservePool)
         external
         view

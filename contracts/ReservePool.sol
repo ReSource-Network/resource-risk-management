@@ -195,8 +195,8 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         return primaryBalance + peripheralBalance;
     }
 
-    /// @notice returns the ratio of primary reserve to total debt denominated in parts per million (PPM).
-    /// @return ratio of primary reserve to total debt denominated in parts per million (PPM).
+    /// @notice returns the ratio of primary reserve to total debt, where 1e18 == 100%.
+    /// @return ratio of primary reserve to total debt, where 1e18 == 100%.
     function RTD() public view returns (uint256) {
         // if primary balance is empty return 0% RTD ratio
         if (primaryBalance == 0) return 0;

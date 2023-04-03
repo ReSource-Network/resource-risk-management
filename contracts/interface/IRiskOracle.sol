@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 interface IRiskOracle {
-    /// @dev The scaling factor is used to specify the precision for point based calculations.
     function baseFeeRate(address creditToken) external view returns (uint256);
     /// @dev The conversion rate between credit currency and reference currency.
     /// If left unset, the default conversion rate will be 1 to 1.
