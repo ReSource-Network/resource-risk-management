@@ -37,8 +37,8 @@ contract RiskManagementTest is Test {
         reservePool.initialize(
             address(creditToken), address(reserveToken), deployer, address(riskOracle)
         );
-        reservePool.setTargetRTD(20 * 10e8); // set targetRTD to 20%
-        riskOracle.setBaseFeeRate(address(reservePool), 50000); // set base fee rate to 5%
+        reservePool.setTargetRTD(20e16); // set targetRTD to 20%
+        riskOracle.setBaseFeeRate(address(reservePool), 5e16); // set base fee rate to 5%
         vm.stopPrank();
     }
 }

@@ -203,8 +203,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         // if credit token has no debt, return 0% RTD ratio
         if (IERC20Upgradeable(creditToken).totalSupply() == 0) return 0;
         // return primary balance amount divided by total debt amount
-        return (primaryBalance * riskOracle.SCALING_FACTOR())
-            / convertCreditTokenToReserveToken(creditToken.totalSupply());
+        return (primaryBalance * 1e18) / convertCreditTokenToReserveToken(creditToken.totalSupply());
     }
 
     /// @notice returns true if the credit token's primary reserve is greater than or equal to the target RTD.
@@ -223,7 +222,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         if (hasValidRTD()) return 0;
         // (target RTD - current RTD) * total debt amount
         return ((targetRTD - RTD()) * convertCreditTokenToReserveToken(creditToken.totalSupply()))
-            / riskOracle.SCALING_FACTOR();
+            / 1e18;
     }
 
     /// @notice converts the given credit token amount to the reserve token denomination.
@@ -242,8 +241,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         if (address(riskOracle) == address(0)) {
             return decimalConversion;
         }
-        return decimalConversion * riskOracle.reserveConversionRateOf(address(this))
-            / riskOracle.SCALING_FACTOR();
+        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1e18;
     }
     /* ========== PRIVATE ========== */
 

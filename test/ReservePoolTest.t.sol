@@ -170,8 +170,8 @@ contract ReservePoolTest is RiskManagementTest {
 
     function testSetTargetRTD() public {
         vm.startPrank(deployer);
-        reservePool.setTargetRTD(100 * riskOracle.SCALING_FACTOR());
-        assertEq(reservePool.targetRTD(), 100 * riskOracle.SCALING_FACTOR());
+        reservePool.setTargetRTD(100 * 1e18);
+        assertEq(reservePool.targetRTD(), 100 * 1e18);
         vm.stopPrank();
     }
 
@@ -182,7 +182,7 @@ contract ReservePoolTest is RiskManagementTest {
         // deposit into excess reserve
         reservePool.depositIntoExcessReserve(100);
         // set target RTD to 100%
-        reservePool.setTargetRTD(100 * 10e8);
+        reservePool.setTargetRTD(100 * 10e16);
         // check that excess reserve was moved to primary reserve
         assertEq(reservePool.primaryBalance(), 100);
         assertEq(reservePool.excessBalance(), 0);
@@ -198,7 +198,7 @@ contract ReservePoolTest is RiskManagementTest {
         // deposit into excess reserve
         reservePool.depositIntoExcessReserve(100);
         // change target RTD to 25%
-        reservePool.setTargetRTD(25 * 10e8);
+        reservePool.setTargetRTD(25e16);
         // check that excess reserve was moved to primary reserve
         assertEq(reservePool.primaryBalance(), 25);
         assertEq(reservePool.excessBalance(), 90);

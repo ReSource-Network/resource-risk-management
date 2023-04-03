@@ -5,9 +5,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interface/IRiskOracle.sol";
 
 contract RiskOracle is IRiskOracle, OwnableUpgradeable {
-    /// @dev used to specify the precision for point based calculations.
-    uint256 public constant SCALING_FACTOR = 10e10;
-
     /// @dev The address able to call set functions.
     address public operator;
 
@@ -55,7 +52,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
         returns (uint256)
     {
         // if the conversion rate is unset, the default conversion rate is 1 to 1.
-        if (reserveConversionRate[reservePool] == 0) return SCALING_FACTOR;
+        if (reserveConversionRate[reservePool] == 0) return 1e18;
         return reserveConversionRate[reservePool];
     }
 
