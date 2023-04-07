@@ -170,8 +170,8 @@ contract ReservePoolTest is RiskManagementTest {
 
     function testSetTargetRTD() public {
         vm.startPrank(deployer);
-        reservePool.setTargetRTD(100 * 1e18);
-        assertEq(reservePool.targetRTD(), 100 * 1e18);
+        reservePool.setTargetRTD(100 * 1 ether);
+        assertEq(reservePool.targetRTD(), 100 * 1 ether);
         vm.stopPrank();
     }
 

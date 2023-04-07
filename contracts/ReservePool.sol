@@ -195,15 +195,16 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         return primaryBalance + peripheralBalance;
     }
 
-    /// @notice returns the ratio of primary reserve to total debt, where 1e18 == 100%.
-    /// @return ratio of primary reserve to total debt, where 1e18 == 100%.
+    /// @notice returns the ratio of primary reserve to total debt, where 1 ether == 100%.
+    /// @return ratio of primary reserve to total debt, where 1 ether == 100%.
     function RTD() public view returns (uint256) {
         // if primary balance is empty return 0% RTD ratio
         if (primaryBalance == 0) return 0;
         // if credit token has no debt, return 0% RTD ratio
         if (IERC20Upgradeable(creditToken).totalSupply() == 0) return 0;
         // return primary balance amount divided by total debt amount
-        return (primaryBalance * 1e18) / convertCreditTokenToReserveToken(creditToken.totalSupply());
+        return
+            (primaryBalance * 1 ether) / convertCreditTokenToReserveToken(creditToken.totalSupply());
     }
 
     /// @notice returns true if the credit token's primary reserve is greater than or equal to the target RTD.
@@ -222,7 +223,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         if (hasValidRTD()) return 0;
         // (target RTD - current RTD) * total debt amount
         return ((targetRTD - RTD()) * convertCreditTokenToReserveToken(creditToken.totalSupply()))
-            / 1e18;
+            / 1 ether;
     }
 
     /// @notice converts the given credit token amount to the reserve token denomination.
@@ -241,7 +242,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         if (address(riskOracle) == address(0)) {
             return decimalConversion;
         }
-        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1e18;
+        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
     }
     /* ========== PRIVATE ========== */
 
