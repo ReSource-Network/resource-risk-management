@@ -41,7 +41,7 @@ interface IReservePool {
     function riskOracle() external view returns (IRiskOracle);
 
     /// @notice Exposes the ERC20 interface of the reserve token.
-    /// @return the reserve token of the reserve pool.
+    /// @return the reserve token of the reserve pool
     function reserveToken() external view returns (IERC20Upgradeable);
 
     /* ========== EVENTS ========== */
