@@ -3,16 +3,16 @@ import { DeployFunction } from "hardhat-deploy/types"
 import { deployProxyAndSave } from "../utils/utils"
 
 const func: DeployFunction = async function (hardhat: HardhatRuntimeEnvironment) {
-  let reserveRegistryAddress = (await hardhat.deployments.getOrNull("ReserveRegistry"))?.address
-  if (!reserveRegistryAddress) {
-    // deploy reserveRegistry
-    const reserveRegistryAbi = (await hardhat.artifacts.readArtifact("ReserveRegistry")).abi
-    const reserveRegistryArgs = []
-    reserveRegistryAddress = await deployProxyAndSave(
-      "ReserveRegistry",
-      reserveRegistryArgs,
+  let registryAddress = (await hardhat.deployments.getOrNull("StableCreditRegistry"))?.address
+  if (!registryAddress) {
+    // deploy registry
+    const registryAbi = (await hardhat.artifacts.readArtifact("StableCreditRegistry")).abi
+    const registryArgs = []
+    registryAddress = await deployProxyAndSave(
+      "StableCreditRegistry",
+      registryArgs,
       hardhat,
-      reserveRegistryAbi
+      registryAbi
     )
   }
 }
