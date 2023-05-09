@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-
 interface IStableCredit {
     /// @dev the reserve pool contract which holds and manages reserve tokens
     function reservePool() external view returns (address);
@@ -14,6 +12,8 @@ interface IStableCredit {
     function creditIssuer() external view returns (address);
     /// @dev the ambassador contract which manages the network's ambassador program
     function ambassador() external view returns (address);
+    /// @dev the credit pool contract which manages the network's credit pool
+    function creditPool() external view returns (address);
     /// @notice transfer a given member's debt to the network
     function writeOffCreditLine(address member) external;
     /// @notice called by the underwriting layer to assign credit lines
@@ -43,4 +43,5 @@ interface IStableCredit {
     event FeeManagerUpdated(address feeManager);
     event CreditIssuerUpdated(address creditIssuer);
     event AmbassadorUpdated(address ambassador);
+    event CreditPoolUpdated(address creditPool);
 }
