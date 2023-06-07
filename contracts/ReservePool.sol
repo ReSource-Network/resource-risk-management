@@ -228,7 +228,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
 
     /// @notice converts the given credit token amount to the reserve token denomination.
     /// @param creditAmount credit token amount to convert to reserve currency denomination.
-    /// @return credit token amount converted to reserve currency denomination.
+    /// @return reserve currency conversion.
     function convertCreditTokenToReserveToken(uint256 creditAmount) public view returns (uint256) {
         if (creditAmount == 0) return creditAmount;
         // create decimal conversion
@@ -244,6 +244,30 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         }
         return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
     }
+
+    /// @notice converts the given reserve token amount to the credit token denomination.
+    /// @param reserveAmount reserve token amount to convert to credit currency denomination.
+    /// @return credit currency conversion.
+    function convertReserveTokenToCreditToken(uint256 reserveAmount)
+        public
+        view
+        returns (uint256)
+    {
+        if (reserveAmount == 0) return reserveAmount;
+        // create decimal conversion
+        uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
+        uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
+        uint256 decimalConversion = creditDecimals > reserveDecimals
+            ? ((reserveAmount * 10 ** (reserveDecimals - creditDecimals)))
+            : ((reserveAmount / 10 ** (creditDecimals - reserveDecimals)));
+
+        // if no risk oracle or conversion rate is unset, return decimal conversion
+        if (address(riskOracle) == address(0)) {
+            return decimalConversion;
+        }
+        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
+    }
+
     /* ========== PRIVATE ========== */
 
     /// @notice this function reallocates needed reserves from the excess reserve to the

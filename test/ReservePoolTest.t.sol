@@ -113,6 +113,15 @@ contract ReservePoolTest is RiskManagementTest {
         );
     }
 
+    function testConvertReserveTokenToCreditToken() public {
+        assertEq(
+            reservePool.convertReserveTokenToCreditToken(
+                100 * (10 ** IERC20Metadata(address(reserveToken)).decimals())
+            ),
+            100 * (10 ** IERC20Metadata(address(creditToken)).decimals())
+        );
+    }
+
     function testReimburseAccountWithInsufficientReserve() public {
         changePrank(deployer);
         // deposit into primary reserve
