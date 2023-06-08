@@ -36,6 +36,14 @@ interface IReservePool {
     /// @return credit token amount converted to reserve currency denomination
     function convertCreditTokenToReserveToken(uint256 amount) external view returns (uint256);
 
+    /// @notice converts the given reserve token amount to the credit token denomination.
+    /// @param reserveAmount reserve token amount to convert to credit currency denomination.
+    /// @return credit currency conversion.
+    function convertReserveTokenToCreditToken(uint256 reserveAmount)
+        external
+        view
+        returns (uint256);
+
     /// @notice Returns the risk oracle interface of the reserve pool.
     /// @return the risk oracle interface of the reserve pool
     function riskOracle() external view returns (IRiskOracle);
