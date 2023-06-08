@@ -56,7 +56,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         // add deposit to primary balance
         primaryBalance += amount;
         // collect reserve token deposit from caller
-        IERC20Upgradeable(reserveToken).safeTransferFrom(_msgSender(), address(this), amount);
+        reserveToken.safeTransferFrom(_msgSender(), address(this), amount);
         emit PrimaryReserveDeposited(amount);
     }
 
@@ -67,7 +67,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         // add deposit to peripheral balance
         peripheralBalance += amount;
         // collect reserve token deposit from caller
-        IERC20Upgradeable(reserveToken).safeTransferFrom(_msgSender(), address(this), amount);
+        reserveToken.safeTransferFrom(_msgSender(), address(this), amount);
         emit PeripheralReserveDeposited(amount);
     }
 
@@ -75,7 +75,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /// @param amount amount of reserve token to deposit.
     function depositIntoExcessReserve(uint256 amount) public {
         // collect remaining amount from caller
-        IERC20Upgradeable(reserveToken).safeTransferFrom(_msgSender(), address(this), amount);
+        reserveToken.safeTransferFrom(_msgSender(), address(this), amount);
         // deposit remaining amount into excess balance
         excessBalance += amount;
         emit ExcessReserveDeposited(amount);
@@ -112,7 +112,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         // reduce excess balance
         excessBalance -= amount;
         // transfer reserve token to caller
-        IERC20Upgradeable(reserveToken).safeTransfer(_msgSender(), amount);
+        reserveToken.safeTransfer(_msgSender(), amount);
         // update deposited amount
         deposits[_msgSender()] -= amount;
         emit ExcessReserveWithdrawn(amount);
@@ -154,7 +154,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
             amount = reserveAmount;
         }
         // transfer given amount to account
-        IERC20Upgradeable(reserveToken).transfer(account, amount);
+        reserveToken.transfer(account, amount);
         emit AccountReimbursed(account, amount);
         return amount;
     }
@@ -203,7 +203,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         // if primary balance is empty return 0% RTD ratio
         if (primaryBalance == 0) return 0;
         // if credit token has no debt, return 0% RTD ratio
-        if (IERC20Upgradeable(creditToken).totalSupply() == 0) return 0;
+        if (creditToken.totalSupply() == 0) return 0;
         // return primary balance amount divided by total debt amount
         return
             (primaryBalance * 1 ether) / convertCreditTokenToReserveToken(creditToken.totalSupply());
