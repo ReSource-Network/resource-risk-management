@@ -11,8 +11,9 @@ interface IReservePool {
     /// @dev The credit token implementation should not expose this function to the public as it could be
     /// exploited to drain the credit token's reserves.
     /// @param account address to reimburse from credit token's reserves.
-    /// @param amount amount reference tokens to withdraw from given credit token's excess reserve.
-    function reimburseAccount(address account, uint256 amount) external;
+    /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
+    /// @return the amount of reserve tokens reimbursed.
+    function reimburseAccount(address account, uint256 amount) external returns (uint256);
 
     /// @notice enables caller to deposit a given reserve token into a credit token's
     /// needed reserve. Deposits flow into the primary reserve until the the target RTD

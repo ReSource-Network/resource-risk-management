@@ -104,7 +104,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /// @notice enables caller to withdraw a given reserve token from a credit token's excess reserve.
     /// @dev The credit token implementation should expose an access controlled function that federates
     /// calls to this function.
-    /// @param amount amount reference tokens to withdraw from given credit token's excess reserve.
+    /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
     function withdraw(uint256 amount) public nonReentrant {
         require(deposits[_msgSender()] >= amount, "ReservePool: Insufficient deposit amount");
         require(amount > 0, "ReservePool: Cannot withdraw 0");
@@ -126,15 +126,16 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /// @dev The credit token implementation should not expose this function to the public as it could be
     /// exploited to drain the credit token's reserves.
     /// @param account address to reimburse from credit token's reserves.
-    /// @param amount amount reference tokens to withdraw from given credit token's excess reserve.
+    /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
     function reimburseAccount(address account, uint256 amount)
         external
         override
         onlyCreditToken
         nonReentrant
+        returns (uint256)
     {
         // if no reserves, return
-        if (reserveBalance() == 0) return;
+        if (reserveBalance() == 0) return 0;
         // if amount is covered by peripheral, reimburse only from peripheral
         if (amount < peripheralBalance) {
             peripheralBalance -= amount;
@@ -155,6 +156,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         // transfer given amount to account
         IERC20Upgradeable(reserveToken).transfer(account, amount);
         emit AccountReimbursed(account, amount);
+        return amount;
     }
 
     /// @notice This function allows the risk manager to set the target RTD for a given credit token.

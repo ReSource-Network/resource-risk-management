@@ -10,7 +10,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
     /// @dev The base fee rate used to manipulate the total fees charged by credit networks,
     /// depending on credit risk.
     mapping(address => uint256) public baseFeeRate;
-    /// @dev The conversion rate between credit currency and reference currency.
+    /// @dev The conversion rate between credit currency and reserve currency.
     /// If left unset, the default conversion rate will be 1 to 1.
     mapping(address => uint256) public reserveConversionRate;
 
@@ -29,7 +29,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
     }
 
     /// @notice Enables the caller to update the given reserve pool's conversion rate. This
-    /// conversion rate dictates the desired rate between the credit currency and the reference currency.
+    /// conversion rate dictates the desired rate between the credit currency and the reserve currency.
     /// @dev if the conversion rate is unset, the default conversion rate is 1 to 1.
     /// @param reservePool address of the reserve pool.
     /// @param _conversionRate new conversion rate for the given reserve pool, where 1 ether == 100%.
@@ -43,7 +43,7 @@ contract RiskOracle is IRiskOracle, OwnableUpgradeable {
 
     /// @notice Returns the conversion rate between a reserve's currency and its credit network currency.
     /// @param reservePool address of the reserve pool to retrieve the conversion rate for.
-    /// @return Conversion rate between credit currency and reference currency, where 1 ether == 100%.
+    /// @return Conversion rate between credit currency and reserve currency, where 1 ether == 100%.
     function reserveConversionRateOf(address reservePool)
         external
         view

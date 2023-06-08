@@ -26,7 +26,7 @@ contract RiskManagementTest is Test {
         vm.startPrank(deployer);
 
         // deploy reserve token
-        reserveToken = new MockERC20(1000000 * (10e18), "Reference Token", "REF");
+        reserveToken = new MockERC20(1000000 * (10e18), "Reserve Token", "REF");
         // deploy credit token
         creditToken = new MockERC20(0, "Credit Token", "CRD");
         // deploy riskOracle

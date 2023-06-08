@@ -28,7 +28,7 @@ The following diagram depicts how **Stable Credit** networks interact with the *
 
 ## Contracts:
 
-- **`ReservePool.sol`**: Responsible for storing and transferring network reference tokens in order to back the credit currency.
+- **`ReservePool.sol`**: Responsible for storing and transferring a network's reserve tokens in order to back the credit currency.
 - **`ReserveRegistry.sol`**: Responsible for maintaining a list of reserves that are to be analyzed and maintained by the ReSource Risk Management infrastructure.
 - **`RiskOracle.sol`**: Responsible for exposing calculated network risk data.
 

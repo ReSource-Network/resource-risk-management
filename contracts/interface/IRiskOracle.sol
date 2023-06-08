@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IRiskOracle {
     function baseFeeRate(address creditToken) external view returns (uint256);
-    /// @dev The conversion rate between credit currency and reference currency.
+    /// @dev The conversion rate between credit currency and reserve currency.
     /// If left unset, the default conversion rate will be 1 to 1.
     function reserveConversionRateOf(address creditToken) external view returns (uint256);
 
