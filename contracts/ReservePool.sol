@@ -29,7 +29,6 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     uint256 public peripheralBalance;
     uint256 public excessBalance;
     uint256 public targetRTD;
-    mapping(address => uint256) public deposits;
 
     /* ========== INITIALIZER ========== */
 
@@ -86,7 +85,6 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     // threshold has been reached, after which the remaining amount is deposited into the excess reserve.
     /// @param amount amount of reserve token to deposit.
     function deposit(uint256 amount) public override nonReentrant {
-        deposits[_msgSender()] += amount;
         uint256 _neededReserves = neededReserves();
         // if neededReserve is greater than amount, deposit full amount into primary reserve
         if (_neededReserves > amount) {
@@ -106,15 +104,12 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /// calls to this function.
     /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
     function withdraw(uint256 amount) public nonReentrant {
-        require(deposits[_msgSender()] >= amount, "ReservePool: Insufficient deposit amount");
         require(amount > 0, "ReservePool: Cannot withdraw 0");
         require(amount <= excessBalance, "ReservePool: Insufficient excess reserve");
         // reduce excess balance
         excessBalance -= amount;
         // transfer reserve token to caller
         reserveToken.safeTransfer(_msgSender(), amount);
-        // update deposited amount
-        deposits[_msgSender()] -= amount;
         emit ExcessReserveWithdrawn(amount);
     }
 
