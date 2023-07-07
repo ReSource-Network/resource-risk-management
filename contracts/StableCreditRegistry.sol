@@ -27,7 +27,8 @@ contract StableCreditRegistry is OwnableUpgradeable {
             IStableCredit(network).access(),
             IStableCredit(network).creditIssuer(),
             IStableCredit(network).ambassador(),
-            IStableCredit(network).reservePool()
+            IStableCredit(network).reservePool(),
+            IStableCredit(network).feeManager()
             );
     }
 
@@ -45,7 +46,8 @@ contract StableCreditRegistry is OwnableUpgradeable {
         address accessManager,
         address creditIssuer,
         address ambassador,
-        address creditPool
+        address creditPool,
+        address feeManager
     );
     event NetworkRemoved(address network);
 }
