@@ -46,6 +46,87 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         riskManager = _riskManager;
     }
 
+    /* ========== VIEW FUNCTIONS ========== */
+
+    /// @notice returns the total amount of reserve tokens in the primary and peripheral reserves.
+    /// @return total amount of reserve tokens in the credit token's primary and peripheral reserves.
+    function reserveBalance() public view returns (uint256) {
+        return primaryBalance + peripheralBalance;
+    }
+
+    /// @notice returns the ratio of primary reserve to total debt, where 1 ether == 100%.
+    /// @return ratio of primary reserve to total debt, where 1 ether == 100%.
+    function RTD() public view returns (uint256) {
+        // if primary balance is empty return 0% RTD ratio
+        if (primaryBalance == 0) return 0;
+        // if credit token has no debt, return 0% RTD ratio
+        if (creditToken.totalSupply() == 0) return 0;
+        // return primary balance amount divided by total debt amount
+        return
+            (primaryBalance * 1 ether) / convertCreditTokenToReserveToken(creditToken.totalSupply());
+    }
+
+    /// @notice returns true if the credit token's primary reserve is greater than or equal to the target RTD.
+    /// @dev returns true if the credit token's primary reserve is greater than or equal to the target RTD.
+    /// @return true if the credit token's primary reserve is greater than or equal to the target RTD.
+    function hasValidRTD() public view returns (bool) {
+        // if current RTD is greater than target RTD, return false
+        return RTD() >= targetRTD;
+    }
+
+    /// @notice returns the amount of reserve tokens needed for the primary reserve to reach the
+    //  target RTD.
+    /// @dev the returned amount is denominated in the reserve token
+    /// @return amount of reserve tokens needed for the primary reserve to reach the target RTD.
+    function neededReserves() public view returns (uint256) {
+        if (hasValidRTD()) return 0;
+        // (target RTD - current RTD) * total debt amount
+        return ((targetRTD - RTD()) * convertCreditTokenToReserveToken(creditToken.totalSupply()))
+            / 1 ether;
+    }
+
+    /// @notice converts the given credit token amount to the reserve token denomination.
+    /// @param creditAmount credit token amount to convert to reserve currency denomination.
+    /// @return reserve currency conversion.
+    function convertCreditTokenToReserveToken(uint256 creditAmount) public view returns (uint256) {
+        if (creditAmount == 0) return creditAmount;
+        // create decimal conversion
+        uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
+        uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
+        uint256 decimalConversion = creditDecimals < reserveDecimals
+            ? ((creditAmount * 10 ** (reserveDecimals - creditDecimals)))
+            : ((creditAmount / 10 ** (creditDecimals - reserveDecimals)));
+
+        // if no risk oracle or conversion rate is unset, return decimal conversion
+        if (address(riskOracle) == address(0)) {
+            return decimalConversion;
+        }
+        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
+    }
+
+    /// @notice converts the given reserve token amount to the credit token denomination.
+    /// @param reserveAmount reserve token amount to convert to credit currency denomination.
+    /// @return credit currency conversion.
+    function convertReserveTokenToCreditToken(uint256 reserveAmount)
+        public
+        view
+        returns (uint256)
+    {
+        if (reserveAmount == 0) return reserveAmount;
+        // create decimal conversion
+        uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
+        uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
+        uint256 decimalConversion = creditDecimals > reserveDecimals
+            ? ((reserveAmount * 10 ** (reserveDecimals - creditDecimals)))
+            : ((reserveAmount / 10 ** (creditDecimals - reserveDecimals)));
+
+        // if no risk oracle or conversion rate is unset, return decimal conversion
+        if (address(riskOracle) == address(0)) {
+            return decimalConversion;
+        }
+        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /// @notice enables caller to deposit a given reserve token into the primary reserve.
@@ -182,87 +263,6 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     function setRiskOracle(address _riskOracle) external onlyRiskManager {
         riskOracle = IRiskOracle(_riskOracle);
         emit RiskOracleUpdated(_riskOracle);
-    }
-
-    /* ========== VIEW FUNCTIONS ========== */
-
-    /// @notice returns the total amount of reserve tokens in the primary and peripheral reserves.
-    /// @return total amount of reserve tokens in the credit token's primary and peripheral reserves.
-    function reserveBalance() public view returns (uint256) {
-        return primaryBalance + peripheralBalance;
-    }
-
-    /// @notice returns the ratio of primary reserve to total debt, where 1 ether == 100%.
-    /// @return ratio of primary reserve to total debt, where 1 ether == 100%.
-    function RTD() public view returns (uint256) {
-        // if primary balance is empty return 0% RTD ratio
-        if (primaryBalance == 0) return 0;
-        // if credit token has no debt, return 0% RTD ratio
-        if (creditToken.totalSupply() == 0) return 0;
-        // return primary balance amount divided by total debt amount
-        return
-            (primaryBalance * 1 ether) / convertCreditTokenToReserveToken(creditToken.totalSupply());
-    }
-
-    /// @notice returns true if the credit token's primary reserve is greater than or equal to the target RTD.
-    /// @dev returns true if the credit token's primary reserve is greater than or equal to the target RTD.
-    /// @return true if the credit token's primary reserve is greater than or equal to the target RTD.
-    function hasValidRTD() public view returns (bool) {
-        // if current RTD is greater than target RTD, return false
-        return RTD() >= targetRTD;
-    }
-
-    /// @notice returns the amount of reserve tokens needed for the primary reserve to reach the
-    //  target RTD.
-    /// @dev the returned amount is denominated in the reserve token
-    /// @return amount of reserve tokens needed for the primary reserve to reach the target RTD.
-    function neededReserves() public view returns (uint256) {
-        if (hasValidRTD()) return 0;
-        // (target RTD - current RTD) * total debt amount
-        return ((targetRTD - RTD()) * convertCreditTokenToReserveToken(creditToken.totalSupply()))
-            / 1 ether;
-    }
-
-    /// @notice converts the given credit token amount to the reserve token denomination.
-    /// @param creditAmount credit token amount to convert to reserve currency denomination.
-    /// @return reserve currency conversion.
-    function convertCreditTokenToReserveToken(uint256 creditAmount) public view returns (uint256) {
-        if (creditAmount == 0) return creditAmount;
-        // create decimal conversion
-        uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
-        uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
-        uint256 decimalConversion = creditDecimals < reserveDecimals
-            ? ((creditAmount * 10 ** (reserveDecimals - creditDecimals)))
-            : ((creditAmount / 10 ** (creditDecimals - reserveDecimals)));
-
-        // if no risk oracle or conversion rate is unset, return decimal conversion
-        if (address(riskOracle) == address(0)) {
-            return decimalConversion;
-        }
-        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
-    }
-
-    /// @notice converts the given reserve token amount to the credit token denomination.
-    /// @param reserveAmount reserve token amount to convert to credit currency denomination.
-    /// @return credit currency conversion.
-    function convertReserveTokenToCreditToken(uint256 reserveAmount)
-        public
-        view
-        returns (uint256)
-    {
-        if (reserveAmount == 0) return reserveAmount;
-        // create decimal conversion
-        uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
-        uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
-        uint256 decimalConversion = creditDecimals > reserveDecimals
-            ? ((reserveAmount * 10 ** (reserveDecimals - creditDecimals)))
-            : ((reserveAmount / 10 ** (creditDecimals - reserveDecimals)));
-
-        // if no risk oracle or conversion rate is unset, return decimal conversion
-        if (address(riskOracle) == address(0)) {
-            return decimalConversion;
-        }
-        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
     }
 
     /* ========== PRIVATE ========== */
