@@ -27,7 +27,7 @@ interface IStableCredit {
     function updateCreditLimit(address member, uint256 creditLimit) external;
     /// @notice Calculates the a credit amount in reserve token value.
     /// @param amount credit amount to convert
-    function convertCreditsToReserveToken(uint256 amount) external view returns (uint256);
+    function convertCreditsToEth(uint256 amount) external view returns (uint256);
 
     /* ========== EVENTS ========== */
 

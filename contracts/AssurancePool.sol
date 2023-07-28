@@ -8,13 +8,13 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "./interface/IReservePool.sol";
+import "./interface/IAssurancePool.sol";
 
-/// @title ReservePool
+/// @title AssurancePool
 /// @author ReSource
-/// @notice Stores and manages reserve tokens according to reserve
+/// @notice Stores and manages reserve tokens according to pool
 /// configurations set by the RiskManager.
-contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== STATE VARIABLES ========== */
@@ -49,7 +49,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
     /* ========== VIEW FUNCTIONS ========== */
 
     /// @notice returns the total amount of reserve tokens in the primary and peripheral reserves.
-    /// @return total amount of reserve tokens in the credit token's primary and peripheral reserves.
+    /// @return total amount of reserve tokens in the primary and peripheral reserves.
     function reserveBalance() public view returns (uint256) {
         return primaryBalance + peripheralBalance;
     }
@@ -66,16 +66,16 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
             (primaryBalance * 1 ether) / convertCreditTokenToReserveToken(creditToken.totalSupply());
     }
 
-    /// @notice returns true if the credit token's primary reserve is greater than or equal to the target RTD.
-    /// @dev returns true if the credit token's primary reserve is greater than or equal to the target RTD.
-    /// @return true if the credit token's primary reserve is greater than or equal to the target RTD.
+    /// @notice returns true if the primary reserve is greater than or equal to the target RTD.
+    /// @dev returns true if the primary reserve is greater than or equal to the target RTD.
+    /// @return true if the primary reserve is greater than or equal to the target RTD.
     function hasValidRTD() public view returns (bool) {
         // if current RTD is greater than target RTD, return false
         return RTD() >= targetRTD;
     }
 
     /// @notice returns the amount of reserve tokens needed for the primary reserve to reach the
-    //  target RTD.
+    /// target RTD.
     /// @dev the returned amount is denominated in the reserve token
     /// @return amount of reserve tokens needed for the primary reserve to reach the target RTD.
     function neededReserves() public view returns (uint256) {
@@ -85,7 +85,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
             / 1 ether;
     }
 
-    /// @notice converts the given credit token amount to the reserve token denomination.
+    /// @notice converts the credit token amount to the reserve token denomination.
     /// @param creditAmount credit token amount to convert to reserve currency denomination.
     /// @return reserve currency conversion.
     function convertCreditTokenToReserveToken(uint256 creditAmount) public view returns (uint256) {
@@ -104,7 +104,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
     }
 
-    /// @notice converts the given reserve token amount to the credit token denomination.
+    /// @notice converts the reserve token amount to the credit token denomination.
     /// @param reserveAmount reserve token amount to convert to credit currency denomination.
     /// @return credit currency conversion.
     function convertReserveTokenToCreditToken(uint256 reserveAmount)
@@ -127,9 +127,28 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
     }
 
+    /// @notice converts the reserve token amount to the credit token denomination.
+    /// @param reserveAmount reserve token amount to convert to credit currency denomination.
+    /// @return credit currency conversion.
+    function convertReserveTokenToEth(uint256 reserveAmount) public view returns (uint256) {
+        if (reserveAmount == 0) return reserveAmount;
+        // create decimal conversion
+        uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
+        uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
+        uint256 decimalConversion = creditDecimals > reserveDecimals
+            ? ((reserveAmount * 10 ** (reserveDecimals - creditDecimals)))
+            : ((reserveAmount / 10 ** (creditDecimals - reserveDecimals)));
+
+        // if no risk oracle or conversion rate is unset, return decimal conversion
+        if (address(riskOracle) == address(0)) {
+            return decimalConversion;
+        }
+        return decimalConversion * riskOracle.reserveConversionRateOf(address(this)) / 1 ether;
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    /// @notice enables caller to deposit a given reserve token into the primary reserve.
+    /// @notice enables caller to deposit reserve tokens into the primary reserve.
     /// @param amount amount of reserve token to deposit.
     function depositIntoPrimaryReserve(uint256 amount) public {
         require(amount > 0, "ReservePool: Cannot deposit 0");
@@ -140,7 +159,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         emit PrimaryReserveDeposited(amount);
     }
 
-    /// @notice enables caller to deposit a given reserve token into the peripheral reserve.
+    /// @notice enables caller to deposit reserve tokens into the peripheral reserve.
     /// @param amount amount of reserve token to deposit.
     function depositIntoPeripheralReserve(uint256 amount) public override nonReentrant {
         require(amount > 0, "ReservePool: Cannot deposit 0");
@@ -151,7 +170,7 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         emit PeripheralReserveDeposited(amount);
     }
 
-    /// @notice enables caller to deposit a given reserve token into the excess reserve.
+    /// @notice enables caller to deposit reserve tokens into the excess reserve.
     /// @param amount amount of reserve token to deposit.
     function depositIntoExcessReserve(uint256 amount) public {
         // collect remaining amount from caller
@@ -161,12 +180,13 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         emit ExcessReserveDeposited(amount);
     }
 
-    /// @notice enables caller to deposit a given reserve token into a credit token's
-    /// needed reserve. Deposits flow into the primary reserve until the the target RTD
-    // threshold has been reached, after which the remaining amount is deposited into the excess reserve.
-    /// @param amount amount of reserve token to deposit.
-    function deposit(uint256 amount) public override nonReentrant {
+    /// @notice enables caller to convert collected eth into reserve token and deposit into the
+    /// necessary RTD dependant reserve.
+    function settleReserves() external nonReentrant {
         uint256 _neededReserves = neededReserves();
+        // TODO: convert Eth to reserveToken
+        // settle amount
+        uint256 amount = 1;
         // if neededReserve is greater than amount, deposit full amount into primary reserve
         if (_neededReserves > amount) {
             depositIntoPrimaryReserve(amount);
@@ -180,10 +200,8 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
         depositIntoExcessReserve(amount - _neededReserves);
     }
 
-    /// @notice enables caller to withdraw a given reserve token from a credit token's excess reserve.
-    /// @dev The credit token implementation should expose an access controlled function that federates
-    /// calls to this function.
-    /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
+    /// @notice enables caller to withdraw reserve tokens from the excess reserve.
+    /// @param amount amount of reserve tokens to withdraw from the excess reserve.
     function withdraw(uint256 amount) public nonReentrant {
         require(amount > 0, "ReservePool: Cannot withdraw 0");
         require(amount <= excessBalance, "ReservePool: Insufficient excess reserve");
@@ -196,13 +214,13 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    /// @notice Called by the credit token implementation to reimburse an account from the credit token's
-    /// reserves. If the amount is covered by the peripheral reserve, the peripheral reserve is depleted first,
+    /// @notice Called by the credit token implementation to reimburse an account.
+    /// If the amount is covered by the peripheral reserve, the peripheral reserve is depleted first,
     /// followed by the primary reserve.
     /// @dev The credit token implementation should not expose this function to the public as it could be
-    /// exploited to drain the credit token's reserves.
-    /// @param account address to reimburse from credit token's reserves.
-    /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
+    /// exploited to drain the reserves.
+    /// @param account address to reimburse from reserves.
+    /// @param amount amount reserve tokens to withdraw from the excess reserve.
     function reimburseAccount(address account, uint256 amount)
         external
         override
@@ -229,14 +247,14 @@ contract ReservePool is IReservePool, OwnableUpgradeable, ReentrancyGuardUpgrade
             // set amount to available reserves
             amount = reserveAmount;
         }
-        // transfer given amount to account
+        // transfer the reserve token amount to account
         reserveToken.transfer(account, amount);
         emit AccountReimbursed(account, amount);
         return amount;
     }
 
-    /// @notice This function allows the risk manager to set the target RTD for a given credit token.
-    /// If the target RTD is increased and there is excess reserve, the excess reserve is reallocated
+    /// @notice This function allows the risk manager to set the target RTD.
+    /// If the target RTD is increased and there is an excess reserve balance, the excess reserve is reallocated
     /// to the primary reserve to attempt to reach the new target RTD.
     /// @param _targetRTD new target RTD.
     function setTargetRTD(uint256 _targetRTD) external override onlyRiskManager {

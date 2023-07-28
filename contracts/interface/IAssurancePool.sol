@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./IRiskOracle.sol";
 
-interface IReservePool {
+interface IAssurancePool {
     /// @notice Called by the credit token implementation to reimburse an account from the credit token's
     /// reserves. If the amount is covered by the peripheral reserve, the peripheral reserve is depleted first,
     /// followed by the primary reserve.
@@ -14,12 +14,6 @@ interface IReservePool {
     /// @param amount amount reserve tokens to withdraw from given credit token's excess reserve.
     /// @return the amount of reserve tokens reimbursed.
     function reimburseAccount(address account, uint256 amount) external returns (uint256);
-
-    /// @notice enables caller to deposit a given reserve token into a credit token's
-    /// needed reserve. Deposits flow into the primary reserve until the the target RTD
-    // threshold has been reached, after which the remaining amount is deposited into the excess reserve.
-    /// @param amount amount of reserve token to deposit.
-    function deposit(uint256 amount) external;
 
     /// @notice enables caller to deposit a given reserve token into a credit token's
     /// peripheral reserve.
