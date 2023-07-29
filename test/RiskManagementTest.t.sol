@@ -7,6 +7,7 @@ import "../contracts/AssurancePool.sol";
 import "../contracts/RiskOracle.sol";
 import "./MockERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@uniswap/v3-periphery/contracts/lens/Quoter.sol";
 
 contract RiskManagementTest is Test {
     address alice;
@@ -21,8 +22,8 @@ contract RiskManagementTest is Test {
     // STATIC VARIABLES
     address USDCAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address USDCWhale = 0x78605Df79524164911C144801f41e9811B7DB73D;
-    address UniQuoter = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    address UniSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    Quoter quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+    address UniSwapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     function setUpReSourceTest() public {
         alice = address(2);
@@ -46,7 +47,7 @@ contract RiskManagementTest is Test {
             address(reserveToken),
             deployer,
             address(riskOracle),
-            UniSwapRouter
+            UniSwapRouterAddress
         );
         assurancePool.setTargetRTD(20e16); // set targetRTD to 20%
         riskOracle.setBaseFeeRate(address(assurancePool), 5e16); // set base fee rate to 5%

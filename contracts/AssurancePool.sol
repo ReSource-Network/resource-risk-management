@@ -40,7 +40,8 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
         address _creditToken,
         address _reserveToken,
         address _riskManager,
-        address _riskOracle
+        address _riskOracle,
+        address _swapRouter
     ) public initializer {
         __ReentrancyGuard_init();
         __Ownable_init();
@@ -48,6 +49,7 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
         reserveToken = IERC20Upgradeable(_reserveToken);
         riskOracle = IRiskOracle(_riskOracle);
         riskManager = _riskManager;
+        swapRouter = ISwapRouter(_swapRouter);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -189,13 +191,23 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
     /// @param amountOutMinimum minimum amount of reserve tokens to receive from eth swap.
     function settleReserves(uint256 amountOutMinimum) external nonReentrant {
         uint256 _neededReserves = neededReserves();
-        // TODO: convert Eth to reserveToken
-        // allow caller to supply the minimumSwapAmount of reserve tokens supplied by uniswap
-        // settle amount
-        uint256 amount = 1;
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, // WETH address
+            tokenOut: reserveToken,
+            fee: poolFee,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: address(this).balance,
+            amountOutMinimum: amountOutMinimum,
+            sqrtPriceLimitX96: 0
+        });
+
+        // The call to `exactInputSingle` executes the swap.
+        reserveAmount = swapRouter.exactInputSingle(params);
         // if neededReserve is greater than amount, deposit full amount into primary reserve
-        if (_neededReserves > amount) {
-            depositIntoPrimaryReserve(amount);
+        if (_neededReserves > reserveAmount) {
+            depositIntoPrimaryReserve(reserveAmount);
             return;
         }
         // deposit neededReserves into primary reserve
@@ -203,7 +215,7 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
             depositIntoPrimaryReserve(_neededReserves);
         }
         // deposit remaining amount into excess reserve
-        depositIntoExcessReserve(amount - _neededReserves);
+        depositIntoExcessReserve(reserveAmount - _neededReserves);
     }
 
     /// @notice enables caller to withdraw reserve tokens from the excess reserve.
