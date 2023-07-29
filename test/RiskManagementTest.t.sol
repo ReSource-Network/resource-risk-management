@@ -3,19 +3,26 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import "../contracts/ReservePool.sol";
+import "../contracts/AssurancePool.sol";
 import "../contracts/RiskOracle.sol";
 import "./MockERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract RiskManagementTest is Test {
     address alice;
     address bob;
     address deployer;
 
-    ReservePool public reservePool;
+    AssurancePool public assurancePool;
     RiskOracle public riskOracle;
-    MockERC20 public reserveToken;
+    ERC20 public reserveToken;
     MockERC20 public creditToken;
+
+    // STATIC VARIABLES
+    address USDCAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address USDCWhale = 0x78605Df79524164911C144801f41e9811B7DB73D;
+    address UniQuoter = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    address UniSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     function setUpReSourceTest() public {
         alice = address(2);
@@ -26,19 +33,26 @@ contract RiskManagementTest is Test {
         vm.startPrank(deployer);
 
         // deploy reserve token
-        reserveToken = new MockERC20(1000000 * (10e18), "Reserve Token", "REF");
+        reserveToken = ERC20(USDCAddress);
         // deploy credit token
         creditToken = new MockERC20(0, "Credit Token", "CRD");
         // deploy riskOracle
         riskOracle = new RiskOracle();
         riskOracle.initialize(deployer);
-        // deploy reservePool
-        reservePool = new ReservePool();
-        reservePool.initialize(
-            address(creditToken), address(reserveToken), deployer, address(riskOracle)
+        // deploy assurancePool
+        assurancePool = new AssurancePool();
+        assurancePool.initialize(
+            address(creditToken),
+            address(reserveToken),
+            deployer,
+            address(riskOracle),
+            UniSwapRouter
         );
-        reservePool.setTargetRTD(20e16); // set targetRTD to 20%
-        riskOracle.setBaseFeeRate(address(reservePool), 5e16); // set base fee rate to 5%
+        assurancePool.setTargetRTD(20e16); // set targetRTD to 20%
+        riskOracle.setBaseFeeRate(address(assurancePool), 5e16); // set base fee rate to 5%
+        changePrank(USDCWhale);
+        // send 100k USDC to deployer
+        reserveToken.transfer(deployer, 100000e6);
         vm.stopPrank();
     }
 }

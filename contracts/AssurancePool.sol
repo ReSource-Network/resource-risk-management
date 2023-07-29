@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "./interface/IAssurancePool.sol";
 
 /// @title AssurancePool
@@ -16,6 +18,8 @@ import "./interface/IAssurancePool.sol";
 /// configurations set by the RiskManager.
 contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
+
+    ISwapRouter public immutable swapRouter;
 
     /* ========== STATE VARIABLES ========== */
 
@@ -93,9 +97,9 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
         // create decimal conversion
         uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
         uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
-        uint256 decimalConversion = creditDecimals < reserveDecimals
-            ? ((creditAmount * 10 ** (reserveDecimals - creditDecimals)))
-            : ((creditAmount / 10 ** (creditDecimals - reserveDecimals)));
+        uint256 decimalConversion = creditDecimals > reserveDecimals
+            ? ((creditAmount / 10 ** (creditDecimals - reserveDecimals)))
+            : ((creditAmount * 10 ** (reserveDecimals - creditDecimals)));
 
         // if no risk oracle or conversion rate is unset, return decimal conversion
         if (address(riskOracle) == address(0)) {
@@ -117,8 +121,8 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
         uint256 reserveDecimals = IERC20Metadata(address(reserveToken)).decimals();
         uint256 creditDecimals = IERC20Metadata(address(creditToken)).decimals();
         uint256 decimalConversion = creditDecimals > reserveDecimals
-            ? ((reserveAmount * 10 ** (reserveDecimals - creditDecimals)))
-            : ((reserveAmount / 10 ** (creditDecimals - reserveDecimals)));
+            ? ((reserveAmount * 10 ** (creditDecimals - reserveDecimals)))
+            : ((reserveAmount / 10 ** (reserveDecimals - creditDecimals)));
 
         // if no risk oracle or conversion rate is unset, return decimal conversion
         if (address(riskOracle) == address(0)) {
@@ -182,9 +186,11 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
 
     /// @notice enables caller to convert collected eth into reserve token and deposit into the
     /// necessary RTD dependant reserve.
-    function settleReserves() external nonReentrant {
+    /// @param amountOutMinimum minimum amount of reserve tokens to receive from eth swap.
+    function settleReserves(uint256 amountOutMinimum) external nonReentrant {
         uint256 _neededReserves = neededReserves();
         // TODO: convert Eth to reserveToken
+        // allow caller to supply the minimumSwapAmount of reserve tokens supplied by uniswap
         // settle amount
         uint256 amount = 1;
         // if neededReserve is greater than amount, deposit full amount into primary reserve
