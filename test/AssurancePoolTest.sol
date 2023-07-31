@@ -41,7 +41,12 @@ contract AssurancePoolTest is RiskManagementTest {
         uint256 amount = 100 ether;
         assertEq(assurancePool.excessBalance(), 0);
         // TODO: send x eth to deployer
-        assurancePool.settleReserves();
+
+        // quote the swap
+        uint256 quote = quote.quoteExactInputSingle(
+            WETHAddress, address(reserveToken), 3000, address(assurancePool).balance, 0
+        );
+        assurancePool.settleReserves(WETHAddress, 3000, quote);
         // check excess reserve
         assertEq(assurancePool.excessBalance(), amount);
     }

@@ -4,5 +4,6 @@
 @resource-risk-management/=contracts/
 @resource-stable-credit/=lib/stable-credit/contracts/
 @uniswap/v3-periphery/=lib/v3-periphery/
+@uniswap/v3-core/=lib/v3-core/
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/

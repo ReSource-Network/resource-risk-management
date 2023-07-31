@@ -22,8 +22,9 @@ contract RiskManagementTest is Test {
     // STATIC VARIABLES
     address USDCAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address USDCWhale = 0x78605Df79524164911C144801f41e9811B7DB73D;
-    Quoter quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+    address WETHAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address UniSwapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    Quoter quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
 
     function setUpReSourceTest() public {
         alice = address(2);

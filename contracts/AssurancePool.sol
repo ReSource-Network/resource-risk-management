@@ -18,16 +18,12 @@ import "./interface/IAssurancePool.sol";
 /// configurations set by the RiskManager.
 contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-
-    ISwapRouter public immutable swapRouter;
-
     /* ========== STATE VARIABLES ========== */
 
-    /// @notice Explain to an end user what this does
-    /// @dev Explain to a developer any extra details
     IERC20Upgradeable public creditToken;
     IERC20Upgradeable public reserveToken;
     IRiskOracle public riskOracle;
+    ISwapRouter public swapRouter;
     address public riskManager;
     uint256 public primaryBalance;
     uint256 public peripheralBalance;
@@ -188,13 +184,17 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
 
     /// @notice enables caller to convert collected eth into reserve token and deposit into the
     /// necessary RTD dependant reserve.
-    /// @param amountOutMinimum minimum amount of reserve tokens to receive from eth swap.
-    function settleReserves(uint256 amountOutMinimum) external nonReentrant {
-        uint256 _neededReserves = neededReserves();
-
+    /// @param tokenIn token to swap for reserve tokens.
+    /// @param poolFee pool fee to use for settlement swap.
+    /// @param amountOutMinimum minimum amount of reserve tokens to receive from tokenIn swap.
+    function settleFunds(address tokenIn, uint24 poolFee, uint256 amountOutMinimum)
+        external
+        nonReentrant
+    {
+        // Swap tokenIn for reserve tokens
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, // WETH address
-            tokenOut: reserveToken,
+            tokenIn: tokenIn,
+            tokenOut: address(reserveToken),
             fee: poolFee,
             recipient: address(this),
             deadline: block.timestamp,
@@ -202,9 +202,9 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
             amountOutMinimum: amountOutMinimum,
             sqrtPriceLimitX96: 0
         });
-
-        // The call to `exactInputSingle` executes the swap.
-        reserveAmount = swapRouter.exactInputSingle(params);
+        uint256 reserveAmount = swapRouter.exactInputSingle(params);
+        // calculate reserves needed to reach target RTD
+        uint256 _neededReserves = neededReserves();
         // if neededReserve is greater than amount, deposit full amount into primary reserve
         if (_neededReserves > reserveAmount) {
             depositIntoPrimaryReserve(reserveAmount);
