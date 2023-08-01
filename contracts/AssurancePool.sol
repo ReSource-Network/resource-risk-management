@@ -161,6 +161,17 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
         emit PrimaryReserveDeposited(amount);
     }
 
+    /// @notice enables caller to deposit reserve tokens into the primary reserve.
+    /// @param amount amount of reserve token to deposit.
+    function depositIntoPrimaryReserve(uint256 amount) public {
+        require(amount > 0, "ReservePool: Cannot deposit 0");
+        // add deposit to primary balance
+        primaryBalance += amount;
+        // collect reserve token deposit from caller
+        reserveToken.safeTransferFrom(_msgSender(), address(this), amount);
+        emit PrimaryReserveDeposited(amount);
+    }
+
     /// @notice enables caller to deposit reserve tokens into the peripheral reserve.
     /// @param amount amount of reserve token to deposit.
     function depositIntoPeripheralReserve(uint256 amount) public override nonReentrant {
@@ -187,7 +198,7 @@ contract AssurancePool is IAssurancePool, OwnableUpgradeable, ReentrancyGuardUpg
     /// @param tokenIn token to swap for reserve tokens.
     /// @param poolFee pool fee to use for settlement swap.
     /// @param amountOutMinimum minimum amount of reserve tokens to receive from tokenIn swap.
-    function settleFunds(address tokenIn, uint24 poolFee, uint256 amountOutMinimum)
+    function settleDeposits(address tokenIn, uint24 poolFee, uint256 amountOutMinimum)
         external
         nonReentrant
     {

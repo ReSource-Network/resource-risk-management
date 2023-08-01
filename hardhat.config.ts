@@ -1,6 +1,6 @@
 const fs = require("fs")
 const chalk = require("chalk")
-require('dotenv').config()
+require("dotenv").config()
 
 import "hardhat-deploy"
 import "hardhat-preprocessor"
@@ -10,8 +10,7 @@ import "@openzeppelin/hardhat-upgrades"
 import "hardhat-gas-reporter"
 import "solidity-coverage"
 import "hardhat-contract-sizer"
-
-
+import "hardhat-dependency-compiler"
 
 import { utils } from "ethers"
 
@@ -62,9 +61,7 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    compilers: [
-      { version: "0.8.17" },
-    ],
+    compilers: [{ version: "0.8.17" }],
   },
   namedAccounts: {
     deployer: {
@@ -93,6 +90,9 @@ const config: HardhatUserConfig = {
     deployments: "./deployments",
     deploy: "./deploy",
     imports: "./artifacts",
+  },
+  dependencyCompiler: {
+    paths: ["test/MockERC20.sol"],
   },
   typechain: {
     outDir: "types",
